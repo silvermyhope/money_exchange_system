@@ -3,7 +3,7 @@ from django.db.models import Q
 from .models import Transaction, Sender
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User, Group
-from django.http import HttpResponse, HttpResponseForbidden
+from django.http import HttpResponse, HttpResponseForbidden, JsonResponse
 from django.contrib.auth.views import LoginView
 from django.contrib import messages
 from .decorators import group_required
@@ -66,11 +66,12 @@ def accountant_dashboard(request):
 @group_required('Cashier')
 def send_transaction(request):
     if request.method == 'POST':
-        sender = request.user
+        sender_id = request.POST.get('sender_id')
         receiver_id = request.POST.get('receiver')
         amount = request.POST.get('amount')
         currency = request.POST.get('currency')
 
+        sender = Sender.objects.get(id=sender_id)
         receiver = User.objects.get(id=receiver_id)
 
         Transaction.objects.create(
@@ -148,12 +149,11 @@ def register_sender(request):
 
 @group_required('Cashier')
 def search_sender(request):
-    query = request.GET.get('q')
-    results = []
-    if query:
-        results = Sender.objects.filter(
-            models.Q(full_name__icontains=query) |
-            models.Q(phone__icontains=query) |
-            models.Q(id_number__icontains=query)
-        )
-    return render(request, 'core/search_sender.html', {'results': results})
+    query = request.GET.get('q', '')
+    senders = Sender.objects.filter(
+        Q(name__icontains=query) |
+        Q(phone__icontains=query) |
+        Q(id_number__icontains=query)
+    )
+    results = [{'id': s.id, 'name': s.name, 'phone': s.phone} for s in senders]
+    return JsonResponse(results, safe=False)

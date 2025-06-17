@@ -5,6 +5,14 @@
     <h2 class="mb-4">Send Money</h2>
     <form method="post">
       {% csrf_token %}
+      <div class="form-group mb-3">
+        <label for="searchSender">Search Sender</label>
+        <input type="text" id="searchSender" class="form-control" placeholder="Search by name, phone or ID">
+        <div id="senderResults" class="list-group mt-2"></div>
+      </div>
+
+      <input type="hidden" name="sender_id" id="senderId">
+
       <div class="mb-3">
         <label for="receiver" class="form-label">Receiver</label>
         <select name="receiver" id="receiver" class="form-select">
@@ -29,3 +37,29 @@
   </div>
 </div>
 {% endblock %}
+
+<script>
+document.getElementById('searchSender').addEventListener('input', function () {
+    const query = this.value;
+    if (query.length < 2) return;
+
+    fetch(`/search-sender/?q=${encodeURIComponent(query)}`)
+        .then(response => response.json())
+        .then(data => {
+            const results = document.getElementById('senderResults');
+            results.innerHTML = '';
+            data.forEach(sender => {
+                const item = document.createElement('button');
+                item.type = "button";
+                item.className = 'list-group-item list-group-item-action';
+                item.textContent = `${sender.name} (${sender.phone})`;
+                item.onclick = () => {
+                    document.getElementById('searchSender').value = sender.name;
+                    document.getElementById('senderId').value = sender.id;
+                    results.innerHTML = '';
+                };
+                results.appendChild(item);
+            });
+        });
+});
+</script>
