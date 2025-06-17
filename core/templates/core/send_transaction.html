@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mb-5">
+  <div class="bg-white">
+    <h2 class="mb-4">Send Money</h2>
+    <form method="post">
+      {% csrf_token %}
+      <div class="mb-3">
+        <label for="receiver" class="form-label">Receiver</label>
+        <select name="receiver" id="receiver" class="form-select">
+          {% for user in users %}
+            <option value="{{ user.id }}">{{ user.username }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="mb-3">
+        <label for="amount" class="form-label">Amount</label>
+        <input type="number" name="amount" id="amount" step="0.01" class="form-control">
+      </div>
+
+      <div class="mb-3">
+        <label for="currency" class="form-label">Currency</label>
+        <input type="text" name="currency" id="currency" value="USD" class="form-control">
+      </div>
+
+      <button type="submit" class="btn btn-primary w-100">Send</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

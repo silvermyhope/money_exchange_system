@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-5">
+    <h2 class="text-gold">Search Sender</h2>
+    <form method="get">
+        <input type="text" name="q" placeholder="Search by name, phone, or ID" class="form-control mb-3">
+        <button class="btn btn-dark" type="submit">Search</button>
+    </form>
+
+    {% if results %}
+        <table class="table table-bordered mt-3">
+            <thead>
+                <tr>
+                    <th>Full Name</th>
+                    <th>Phone</th>
+                    <th>ID Number</th>
+                    <th>DOB</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for sender in results %}
+                <tr>
+                    <td>{{ sender.full_name }}</td>
+                    <td>{{ sender.phone }}</td>
+                    <td>{{ sender.id_number }}</td>
+                    <td>{{ sender.dob }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% elif request.GET.q %}
+        <p class="text-danger">No results found.</p>
+    {% endif %}
+</div>
+{% endblock %}

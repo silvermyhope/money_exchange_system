@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container my-4">
+  <h2 class="mb-4 text-gold">Accountant Dashboard</h2>
+
+  <div class="row mb-4">
+    <div class="col-md-4">
+      <div class="card shadow bg-white rounded p-3 text-center border-gold">
+        <h5>Total Transactions</h5>
+        <h3>{{ total_transactions }}</h3>
+      </div>
+    </div>
+    <div class="col-md-8">
+      <div class="card shadow bg-white rounded p-3 border-gold">
+        <h5>Total Amount by Currency</h5>
+        <ul class="list-group">
+          {% for item in totals_by_currency %}
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              {{ item.currency }}
+              <span class="badge bg-gold text-white">{{ item.total_amount }}</span>
+            </li>
+          {% empty %}
+            <li class="list-group-item">No transactions found.</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="card shadow bg-white rounded p-3 border-gold">
+    <h5>Recent Transactions</h5>
+    <table class="table table-bordered table-hover mt-3">
+      <thead class="bg-gold text-white">
+        <tr>
+          <th>#</th>
+          <th>Sender</th>
+          <th>Receiver</th>
+          <th>Amount</th>
+          <th>Currency</th>
+          <th>Status</th>
+          <th>Date</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for tx in recent_transactions %}
+          <tr>
+            <td>{{ forloop.counter }}</td>
+            <td>{{ tx.sender.username }}</td>
+            <td>{{ tx.receiver.username }}</td>
+            <td>{{ tx.amount }}</td>
+            <td>{{ tx.currency }}</td>
+            <td>{{ tx.status }}</td>
+            <td>{{ tx.created_at|date:"Y-m-d H:i" }}</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="7">No transactions found.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

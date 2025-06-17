@@ -1,0 +1,147 @@
+/* Layout Fix: Sticky Footer */
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    background-color: #fffdf5;
+    color: #212121;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+/* Main content container grows to fill height */
+.container {
+    flex: 1;
+}
+
+/* Navbar */
+.navbar {
+    background-color: #d4af37 !important;
+}
+
+.navbar-brand, .nav-link {
+    color: #000000 !important;
+    font-weight: 600;
+}
+
+.navbar-brand:hover, .nav-link:hover {
+    color: #ffffff !important;
+}
+
+/* Headings */
+h1, h2, h3, h4 {
+    color: #d4af37;
+}
+
+/* Buttons */
+.btn-primary {
+    background-color: #d4af37;
+    border-color: #d4af37;
+    color: #000000;
+    font-weight: bold;
+}
+
+.btn-primary:hover {
+    background-color: #b9972f;
+    border-color: #b9972f;
+    color: #ffffff;
+}
+
+.btn-outline-primary {
+    border-color: #d4af37;
+    color: #d4af37;
+    font-weight: bold;
+}
+
+.btn-outline-primary:hover {
+    background-color: #d4af37;
+    color: #ffffff;
+}
+
+/* Tables */
+.table {
+    border: 1px solid #d4af37;
+}
+
+.table thead {
+    background-color: #d4af37;
+    color: #000000;
+    font-weight: bold;
+    border-bottom: 2px solid #b9972f;
+}
+
+.table-striped > tbody > tr:nth-of-type(odd) {
+    background-color: #fcf8e3;
+}
+
+/* Forms */
+.form-control {
+    border: 1px solid #d4af37;
+}
+
+.form-label {
+    color: #d4af37;
+    font-weight: 500;
+}
+
+input[type="text"],
+input[type="number"],
+select {
+    background-color: #ffffff;
+    border: 1px solid #d4af37;
+    padding: 8px;
+    border-radius: 4px;
+}
+
+/* Card/Box Elements */
+.bg-white {
+    background-color: #ffffff !important;
+    border: 1px solid #d4af37;
+    box-shadow: 0 0 10px rgba(212, 175, 55, 0.15);
+    padding: 20px;
+    border-radius: 8px;
+}
+
+/* Footer */
+.gold-footer {
+    background-color: #000000;
+    color: #d4af37;
+    border-top: 2px solid #d4af37;
+    font-size: 14px;
+    text-align: center;
+    padding: 20px 0;
+}
+
+.gold-footer p,
+.gold-footer small {
+    margin: 0;
+    color: #d4af37;
+}
+
+
+.text-gold {
+  color: #D4AF37;
+}
+
+.bg-gold {
+  background-color: #D4AF37 !important;
+}
+
+.border-gold {
+  border: 1px solid #D4AF37 !important;
+}
+
+.btn-outline-gold {
+  border: 1px solid #D4AF37;
+  color: #D4AF37;
+  background-color: white;
+}
+
+.btn-outline-gold:hover {
+  background-color: #D4AF37;
+  color: white;
+}

@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2 class="text-gold mb-4">Welcome, {{ request.user.first_name }}!</h2>
+
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card bg-gold text-white shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Today's Transactions</h5>
+                    <p class="card-text display-6">{{ today_count }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 offset-md-4 text-end">
+            <a href="{% url 'send_transaction' %}" class="btn btn-outline-gold btn-lg">Send Transaction</a>
+        </div>
+    </div>
+
+    <h4 class="text-gold mb-3">Recent Transactions</h4>
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover bg-white text-dark">
+            <thead class="bg-gold text-white">
+                <tr>
+                    <th>#</th>
+                    <th>Receiver</th>
+                    <th>Amount</th>
+                    <th>Currency</th>
+                    <th>Status</th>
+                    <th>Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for transaction in recent_transactions %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ transaction.receiver.get_full_name }}</td>
+                    <td>{{ transaction.amount }}</td>
+                    <td>{{ transaction.currency }}</td>
+                    <td>{{ transaction.status }}</td>
+                    <td>{{ transaction.created_at|date:"M d, Y H:i" }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="text-center">No transactions yet.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
