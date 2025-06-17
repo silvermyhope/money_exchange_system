@@ -151,9 +151,9 @@ def register_sender(request):
 def search_sender(request):
     query = request.GET.get('q', '')
     senders = Sender.objects.filter(
-        Q(name__icontains=query) |
+        Q(full_name__icontains=query) |
         Q(phone__icontains=query) |
         Q(id_number__icontains=query)
     )
-    results = [{'id': s.id, 'name': s.name, 'phone': s.phone} for s in senders]
+    results = [{'id': s.id, 'full_name': s.name, 'phone': s.phone} for s in senders]
     return JsonResponse(results, safe=False)

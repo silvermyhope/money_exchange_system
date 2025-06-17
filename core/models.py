@@ -21,10 +21,19 @@ class Transaction(models.Model):
     currency = models.CharField(max_length=10)
     status = models.CharField(max_length=20, choices=[
         ('Pending', 'Pending'),
+        ('Processing', 'Processing'),
         ('Completed', 'Completed'),
         ('Cancelled', 'Cancelled')
     ])
     created_at = models.DateTimeField(auto_now_add=True)
 
+    def save(self, *args, **kwargs):
+        if not self.pin:
+            self.pin = self.generate_pin()
+        super().save(*args, **kwargs)
+
+    def generate_pin(self):
+        return ''.join(random.choices(string.digits, k=6))
+
     def __str__(self):
-        return f"{self.sender.username} → {self.receiver.username} | {self.amount} {self.currency}"
+        return f"{self.sender} → {self.receiver} ({self.amount} {self.currency})"
