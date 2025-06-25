@@ -5,13 +5,14 @@
     <h2 class="mb-4">Send Money</h2>
     <form method="post">
       {% csrf_token %}
-      <div class="form-group mb-3">
+      <div class="form-group mb-3 position-relative">
         <label for="searchSender">Search Sender</label>
         <input type="text" id="searchSender" class="form-control" placeholder="Search by name, phone or ID">
         <div id="senderResults" class="list-group mt-2"></div>
+        <input type="hidden" name="sender_id" id="senderId">
       </div>
 
-      <input type="hidden" name="sender_id" id="senderId">
+      
 
       <div class="mb-3">
         <label for="receiver" class="form-label">Receiver</label>
@@ -36,30 +37,41 @@
     </form>
   </div>
 </div>
-{% endblock %}
 
 <script>
-document.getElementById('searchSender').addEventListener('input', function () {
-    const query = this.value;
-    if (query.length < 2) return;
+document.addEventListener('DOMContentLoaded', function () {
+    const searchInput = document.getElementById('searchSender');
+    const resultsDiv = document.getElementById('senderResults');
 
-    fetch(`/search-sender/?q=${encodeURIComponent(query)}`)
-        .then(response => response.json())
-        .then(data => {
-            const results = document.getElementById('senderResults');
-            results.innerHTML = '';
-            data.forEach(sender => {
-                const item = document.createElement('button');
-                item.type = "button";
-                item.className = 'list-group-item list-group-item-action';
-                item.textContent = `${sender.name} (${sender.phone})`;
-                item.onclick = () => {
-                    document.getElementById('searchSender').value = sender.name;
-                    document.getElementById('senderId').value = sender.id;
-                    results.innerHTML = '';
-                };
-                results.appendChild(item);
+    searchInput.addEventListener('input', function () {
+        const query = this.value.trim();
+        if (query.length < 2) {
+            resultsDiv.innerHTML = '';
+            return;
+        }
+
+        fetch(`/search-sender/?q=${encodeURIComponent(query)}`)
+            .then(response => response.json())
+            .then(data => {
+                resultsDiv.innerHTML = '';
+                data.forEach(sender => {
+                    const item = document.createElement('button');
+                    item.type = 'button';
+                    item.className = 'list-group-item list-group-item-action';
+                    item.textContent = `${sender.full_name} (${sender.phone})`;
+                    item.onclick = function () {
+                        searchInput.value = sender.full_name;
+                        document.getElementById('senderId').value = sender.id;
+                        resultsDiv.innerHTML = '';
+                    };
+                    resultsDiv.appendChild(item);
+                });
+            })
+            .catch(error => {
+                console.error('Search error:', error);
             });
-        });
+    });
 });
 </script>
+
+{% endblock %}

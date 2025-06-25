@@ -1,5 +1,4 @@
 from django.shortcuts import render, redirect
-from django.db.models import Q
 from .models import Transaction, Sender
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User, Group
@@ -8,8 +7,10 @@ from django.contrib.auth.views import LoginView
 from django.contrib import messages
 from .decorators import group_required
 from django.utils.timezone import now
-from django.db.models import Sum, Count
+from django.db.models import Sum, Count, Q
 from .forms import SenderForm
+import random
+import string
 
 
 class RoleBasedLoginView(LoginView):
@@ -73,14 +74,23 @@ def send_transaction(request):
 
         sender = Sender.objects.get(id=sender_id)
         receiver = User.objects.get(id=receiver_id)
+        
+        if not sender_id or not receiver_id:
+            messages.error(request, "Both sender and receiver must be selected.")
+            return redirect('send_transaction')
+        
+        pin = generate_unique_pin()
 
         Transaction.objects.create(
             sender=sender,
             receiver=receiver,
             amount=amount,
             currency=currency,
-            status='Pending'
+            status='Pending',
+            pin=pin,
+            cashier=request.user,
         )
+        messages.success(request, f"Transaction created! PIN: {transaction.pin}")
         return redirect('transaction_list')
 
     users = User.objects.exclude(id=request.user.id)
@@ -155,5 +165,13 @@ def search_sender(request):
         Q(phone__icontains=query) |
         Q(id_number__icontains=query)
     )
-    results = [{'id': s.id, 'full_name': s.name, 'phone': s.phone} for s in senders]
+    results = [{'id': s.id, 'full_name': s.full_name, 'phone': s.phone} for s in senders]
     return JsonResponse(results, safe=False)
+
+
+def generate_unique_pin():
+    from .models import Transaction
+    while True:
+        pin = ''.join(random.choices(string.digits, k=6))
+        if not Transaction.objects.filter(pin=pin).exists():
+            return pin

@@ -3,6 +3,12 @@
 <div class="container mb-5">
   <div class="bg-white">
     <h2 class="mb-4">Transaction List</h2>
+    {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-success">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
+  
     {% if group == 'Cashier' %}
     <a href="{% url 'send_transaction' %}" class="btn btn-primary mb-3">Send Money</a>
     {% endif %}

@@ -14,7 +14,7 @@ class Sender(models.Model):
         return f"{self.full_name} - {self.id_number}"
 
 class Transaction(models.Model):
-    sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_transactions')
+    sender = models.ForeignKey(Sender, on_delete=models.CASCADE, related_name='sent_transactions')
     receiver = models.ForeignKey(User, on_delete=models.CASCADE, related_name='received_transactions')
     cashier = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='cashier_transactions')
     amount = models.DecimalField(max_digits=10, decimal_places=2)
@@ -25,6 +25,8 @@ class Transaction(models.Model):
         ('Completed', 'Completed'),
         ('Cancelled', 'Cancelled')
     ])
+    pin = models.CharField(max_length=6, unique=True, null=True, blank=True)
+    
     created_at = models.DateTimeField(auto_now_add=True)
 
     def save(self, *args, **kwargs):

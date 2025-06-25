@@ -136,3 +136,6 @@ def current_year(request):
     return {'now': now()}
 
 LOGOUT_REDIRECT_URL = '/login/'
+
+LOGIN_URL = '/login/'
+LOGIN_REDIRECT_URL = '/'  # this ensures get_success_url() will be called
