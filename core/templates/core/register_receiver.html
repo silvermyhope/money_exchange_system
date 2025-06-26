@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container py-5">
+    <div class="card shadow p-4">
+        <h2 class="mb-4 text-warning fw-bold">Register New Receiver</h2>
+        <form method="POST" novalidate>
+            {% csrf_token %}
+            <div class="mb-3">
+                <label for="sender_id" class="form-label text-warning">Sender</label>
+                <select name="sender_id" id="sender_id" class="form-control">
+                    {% for sender in senders %}
+                        <option value="{{ sender.id }}">{{ sender.full_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="mb-3">
+                <label class="form-label text-warning">Full Name</label>
+                <input type="text" name="name" class="form-control" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label text-warning">Country</label>
+                <input type="text" name="country" class="form-control" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label text-warning">Phone</label>
+                <input type="text" name="phone" class="form-control" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label text-warning">Bank Name</label>
+                <input type="text" name="bank_name" class="form-control" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label text-warning">Account Number</label>
+                <input type="text" name="account_number" class="form-control" required>
+            </div>
+            <div class="mt-4">
+                <button type="submit" class="btn btn-success">Register Receiver</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

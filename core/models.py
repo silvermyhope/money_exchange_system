@@ -12,10 +12,21 @@ class Sender(models.Model):
 
     def __str__(self):
         return f"{self.full_name} - {self.id_number}"
+    
+class Receiver(models.Model):
+    sender = models.ForeignKey(Sender, on_delete=models.CASCADE, related_name='receivers')
+    name = models.CharField(max_length=255)
+    country = models.CharField(max_length=100)
+    phone = models.CharField(max_length=20)
+    bank_name = models.CharField(max_length=100)
+    account_number = models.CharField(max_length=50)
+
+    def __str__(self):
+        return f"{self.name} ({self.country})"
 
 class Transaction(models.Model):
     sender = models.ForeignKey(Sender, on_delete=models.CASCADE, related_name='sent_transactions')
-    receiver = models.ForeignKey(User, on_delete=models.CASCADE, related_name='received_transactions')
+    receiver = models.ForeignKey(Receiver, on_delete=models.CASCADE, related_name='received_transactions')
     cashier = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='cashier_transactions')
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     currency = models.CharField(max_length=10)

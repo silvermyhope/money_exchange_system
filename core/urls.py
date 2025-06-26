@@ -11,4 +11,6 @@ urlpatterns = [
     
     path('register-sender/', views.register_sender, name='register_sender'),
     path('search-sender/', views.search_sender, name='search_sender'),
+    path('register-receiver/', views.register_receiver, name='register_receiver'),
+    path('get-receivers/', views.get_receivers_by_sender, name='get_receivers_by_sender'),
 ]

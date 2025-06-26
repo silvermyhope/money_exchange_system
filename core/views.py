@@ -1,5 +1,5 @@
-from django.shortcuts import render, redirect
-from .models import Transaction, Sender
+from django.shortcuts import render, redirect, get_object_or_404
+from .models import Transaction, Sender, Receiver
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User, Group
 from django.http import HttpResponse, HttpResponseForbidden, JsonResponse
@@ -36,14 +36,16 @@ class RoleBasedLoginView(LoginView):
 def cashier_dashboard(request):
     user = request.user
     today = now().date()
-    recent_transactions = Transaction.objects.filter(sender=user).order_by('-created_at')[:10]
-    today_count = Transaction.objects.filter(sender=user, created_at__date=today).count()
+
+    recent_transactions = Transaction.objects.filter(cashier=user).order_by('-created_at')[:10]
+    today_count = Transaction.objects.filter(cashier=user, created_at__date=today).count()
 
     context = {
         'recent_transactions': recent_transactions,
         'today_count': today_count,
     }
     return render(request, 'core/cashier_dashboard.html', context)
+
 
 
 @login_required
@@ -72,16 +74,20 @@ def send_transaction(request):
         amount = request.POST.get('amount')
         currency = request.POST.get('currency')
 
-        sender = Sender.objects.get(id=sender_id)
-        receiver = User.objects.get(id=receiver_id)
-        
         if not sender_id or not receiver_id:
             messages.error(request, "Both sender and receiver must be selected.")
             return redirect('send_transaction')
-        
+
+        try:
+            sender = Sender.objects.get(id=sender_id)
+            receiver = Receiver.objects.get(id=receiver_id)
+        except (Sender.DoesNotExist, Receiver.DoesNotExist):
+            messages.error(request, "Invalid sender or receiver.")
+            return redirect('send_transaction')
+
         pin = generate_unique_pin()
 
-        Transaction.objects.create(
+        transaction = Transaction.objects.create(
             sender=sender,
             receiver=receiver,
             amount=amount,
@@ -93,15 +99,15 @@ def send_transaction(request):
         messages.success(request, f"Transaction created! PIN: {transaction.pin}")
         return redirect('transaction_list')
 
-    users = User.objects.exclude(id=request.user.id)
-    return render(request, 'core/send_transaction.html', {'users': users})
+    return render(request, 'core/send_transaction.html')
+
 
 
 
 @login_required
 def transaction_list(request):
     if request.user.groups.filter(name='Cashier').exists():
-        transactions = Transaction.objects.filter(sender=request.user)
+        transactions = Transaction.objects.filter(cashier=request.user)
     elif request.user.groups.filter(name='Accountant').exists():
         transactions = Transaction.objects.all()
     else:
@@ -160,11 +166,19 @@ def register_sender(request):
 @group_required('Cashier')
 def search_sender(request):
     query = request.GET.get('q', '')
+
+    if len(query) < 2:
+            return JsonResponse({'not_found': True})  # Early exit if query too short
+
     senders = Sender.objects.filter(
         Q(full_name__icontains=query) |
         Q(phone__icontains=query) |
         Q(id_number__icontains=query)
     )
+
+    if not senders.exists():
+        return JsonResponse({'not_found': True})
+
     results = [{'id': s.id, 'full_name': s.full_name, 'phone': s.phone} for s in senders]
     return JsonResponse(results, safe=False)
 
@@ -175,3 +189,42 @@ def generate_unique_pin():
         pin = ''.join(random.choices(string.digits, k=6))
         if not Transaction.objects.filter(pin=pin).exists():
             return pin
+        
+
+@login_required
+@group_required('Cashier')
+def register_receiver(request):
+    if request.method == 'POST':
+        sender_id = request.POST.get('sender_id')
+        name = request.POST.get('name')
+        country = request.POST.get('country')
+        phone = request.POST.get('phone')
+        bank_name = request.POST.get('bank_name')
+        account_number = request.POST.get('account_number')
+
+        sender = Sender.objects.get(id=sender_id)
+
+        Receiver.objects.create(
+            sender=sender,
+            name=name,
+            country=country,
+            phone=phone,
+            bank_name=bank_name,
+            account_number=account_number
+        )
+        messages.success(request, "Receiver registered successfully!")
+        return redirect('send_transaction')
+    
+    # This part renders the form with all senders in a dropdown
+    senders = Sender.objects.all()
+    return render(request, 'core/register_receiver.html', {'senders': senders})
+
+
+
+@login_required
+@group_required('Cashier')
+def get_receivers_by_sender(request):
+    sender_id = request.GET.get('sender_id')
+    receivers = Receiver.objects.filter(sender_id=sender_id)
+    data = [{'id': r.id, 'name': r.name, 'phone': r.phone} for r in receivers]
+    return JsonResponse(data, safe=False)

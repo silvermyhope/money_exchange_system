@@ -1,47 +1,59 @@
 {% extends 'base.html' %}
+{% load static %}
 {% block content %}
-<div class="container mb-5">
-  <div class="bg-white">
-    <h2 class="mb-4">Send Money</h2>
-    <form method="post">
-      {% csrf_token %}
-      <div class="form-group mb-3 position-relative">
-        <label for="searchSender">Search Sender</label>
-        <input type="text" id="searchSender" class="form-control" placeholder="Search by name, phone or ID">
-        <div id="senderResults" class="list-group mt-2"></div>
-        <input type="hidden" name="sender_id" id="senderId">
-      </div>
+<div class="container my-5">
+    <div class="bg-white p-4 rounded shadow">
+        <h2 class="mb-4">Send Money</h2>
 
-      
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
 
-      <div class="mb-3">
-        <label for="receiver" class="form-label">Receiver</label>
-        <select name="receiver" id="receiver" class="form-select">
-          {% for user in users %}
-            <option value="{{ user.id }}">{{ user.username }}</option>
-          {% endfor %}
-        </select>
-      </div>
+        <form method="POST">
+            {% csrf_token %}
 
-      <div class="mb-3">
-        <label for="amount" class="form-label">Amount</label>
-        <input type="number" name="amount" id="amount" step="0.01" class="form-control">
-      </div>
+            <!-- Sender Search -->
+            <div class="mb-3">
+                <label for="searchSender" class="form-label">Search Sender</label>
+                <input type="text" id="searchSender" class="form-control" placeholder="Type sender name, phone or ID number">
+                <input type="hidden" id="senderId" name="sender_id">
+                <div id="senderResults" class="list-group mt-1"></div>
+            </div>
 
-      <div class="mb-3">
-        <label for="currency" class="form-label">Currency</label>
-        <input type="text" name="currency" id="currency" value="USD" class="form-control">
-      </div>
+            <!-- Receiver Dropdown -->
+            <div class="mb-3">
+                <label for="receiverDropdown" class="form-label">Select Receiver</label>
+                <select id="receiverDropdown" name="receiver" class="form-select" required>
+                    <option value="">Select receiver</option>
+                </select>
+            </div>
 
-      <button type="submit" class="btn btn-primary w-100">Send</button>
-    </form>
-  </div>
+            <!-- Amount -->
+            <div class="mb-3">
+                <label for="amount" class="form-label">Amount</label>
+                <input type="number" step="0.01" name="amount" id="amount" class="form-control" required>
+            </div>
+
+            <!-- Currency -->
+            <div class="mb-3">
+                <label for="currency" class="form-label">Currency</label>
+                <input type="text" name="currency" id="currency" class="form-control" placeholder="e.g. USD" required>
+            </div>
+
+            <!-- Submit -->
+            <button type="submit" class="btn btn-primary">Send</button>
+        </form>
+    </div>
 </div>
 
+<!-- JavaScript -->
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const searchInput = document.getElementById('searchSender');
     const resultsDiv = document.getElementById('senderResults');
+    const receiverDropdown = document.getElementById('receiverDropdown');
 
     searchInput.addEventListener('input', function () {
         const query = this.value.trim();
@@ -54,24 +66,52 @@ document.addEventListener('DOMContentLoaded', function () {
             .then(response => response.json())
             .then(data => {
                 resultsDiv.innerHTML = '';
-                data.forEach(sender => {
-                    const item = document.createElement('button');
-                    item.type = 'button';
-                    item.className = 'list-group-item list-group-item-action';
-                    item.textContent = `${sender.full_name} (${sender.phone})`;
-                    item.onclick = function () {
-                        searchInput.value = sender.full_name;
-                        document.getElementById('senderId').value = sender.id;
-                        resultsDiv.innerHTML = '';
-                    };
+                if (data.length === 0) {
+                    const item = document.createElement('div');
+                    item.className = 'list-group-item text-danger';
+                    item.textContent = "No sender found. ";
                     resultsDiv.appendChild(item);
-                });
+                } else {
+                    data.forEach(sender => {
+                        const item = document.createElement('button');
+                        item.type = 'button';
+                        item.className = 'list-group-item list-group-item-action';
+                        item.textContent = `${sender.full_name} (${sender.phone})`;
+                        item.onclick = function () {
+                            searchInput.value = sender.full_name;
+                            document.getElementById('senderId').value = sender.id;
+                            resultsDiv.innerHTML = '';
+                            loadReceivers(sender.id);
+                        };
+                        resultsDiv.appendChild(item);
+                    });
+                }
             })
             .catch(error => {
                 console.error('Search error:', error);
             });
     });
+
+    function loadReceivers(senderId) {
+        fetch(`/get-receivers/?sender_id=${senderId}`)
+            .then(response => response.json())
+            .then(data => {
+                receiverDropdown.innerHTML = '<option value="">Select Receiver</option>';
+                if (data.length === 0) {
+                    const option = document.createElement('option');
+                    option.value = "";
+                    option.textContent = "No receivers found for this sender";
+                    receiverDropdown.appendChild(option);
+                } else {
+                    data.forEach(receiver => {
+                        const option = document.createElement('option');
+                        option.value = receiver.id;
+                        option.textContent = `${receiver.name} (${receiver.phone})`;
+                        receiverDropdown.appendChild(option);
+                    });
+                }
+            });
+    }
 });
 </script>
-
 {% endblock %}

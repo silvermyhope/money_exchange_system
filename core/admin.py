@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Sender, Transaction
+from .models import Sender, Transaction, Receiver
 
 @admin.register(Transaction)
 class TransactionAdmin(admin.ModelAdmin):
@@ -11,3 +11,8 @@ class TransactionAdmin(admin.ModelAdmin):
 class SenderAdmin(admin.ModelAdmin):
     list_display = ('full_name', 'phone', 'id_number')
     search_fields = ('full_name', 'phone', 'id_number')
+
+@admin.register(Receiver)
+class ReceiverAdmin(admin.ModelAdmin):
+    list_display = ('name', 'country', 'phone', 'bank_name', 'sender', 'account_number')
+    search_fields = ('name', 'country', 'phone')

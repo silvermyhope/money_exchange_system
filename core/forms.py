@@ -1,5 +1,5 @@
 from django import forms
-from .models import Sender
+from .models import Sender, Receiver
 
 
 class SenderForm(forms.ModelForm):
@@ -17,3 +17,8 @@ class SenderForm(forms.ModelForm):
         if Sender.objects.filter(id_number=id_number).exists():
             raise forms.ValidationError("A sender with this ID number already exists.")
         return id_number
+    
+class ReceiverForm(forms.ModelForm):
+    class Meta:
+        model = Receiver
+        fields = ['sender', 'name', 'country', 'phone', 'bank_name', 'account_number']
