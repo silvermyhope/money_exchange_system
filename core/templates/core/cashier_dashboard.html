@@ -37,7 +37,7 @@
                 {% for transaction in recent_transactions %}
                 <tr>
                     <td>{{ forloop.counter }}</td>
-                    <td>{{ transaction.receiver.get_full_name }}</td>
+                    <td>{{ transaction.receiver.name }}</td>
                     <td>{{ transaction.amount }}</td>
                     <td>{{ transaction.currency }}</td>
                     <td>{{ transaction.status }}</td>

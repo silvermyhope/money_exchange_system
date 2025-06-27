@@ -11,107 +11,189 @@
             {% endfor %}
         {% endif %}
 
+        <!-- Search Inputs -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-6">
+                <input type="text" id="searchByName" class="form-control" placeholder="Search sender by name">
+            </div>
+            <div class="col-md-6">
+                <input type="text" id="searchByPhone" class="form-control" placeholder="Search sender by phone">
+            </div>
+        </div>
+
+        <!-- Sender Selection Cards -->
+        <div id="senderCardList" class="row g-3 mb-4"></div>
+
+        <!-- Selected Sender Display -->
+        <div id="selectedSenderCard" class="mb-4"></div>
+
+        <!-- Not Found -->
+        <div id="notFound" class="alert alert-warning d-none">
+            Sender not found. <a href="{% url 'register_sender' %}" class="btn btn-sm btn-outline-primary ms-2">Register New Sender</a>
+        </div>
+
+        <!-- Receiver Table -->
+        <div id="receiverTableCard" class="card mb-4 d-none">
+            <div class="card-header">Receivers</div>
+            <div class="card-body">
+                <table class="table table-bordered table-striped" id="receiverTable">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Phone</th>
+                            <th>Country</th>
+                            <th>Bank</th>
+                            <th>Account #</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Send Form -->
         <form method="POST">
             {% csrf_token %}
+            <input type="hidden" name="sender_id" id="senderId">
+            <input type="hidden" name="receiver" id="receiverId">
 
-            <!-- Sender Search -->
-            <div class="mb-3">
-                <label for="searchSender" class="form-label">Search Sender</label>
-                <input type="text" id="searchSender" class="form-control" placeholder="Type sender name, phone or ID number">
-                <input type="hidden" id="senderId" name="sender_id">
-                <div id="senderResults" class="list-group mt-1"></div>
-            </div>
-
-            <!-- Receiver Dropdown -->
-            <div class="mb-3">
-                <label for="receiverDropdown" class="form-label">Select Receiver</label>
-                <select id="receiverDropdown" name="receiver" class="form-select" required>
-                    <option value="">Select receiver</option>
-                </select>
-            </div>
-
-            <!-- Amount -->
             <div class="mb-3">
                 <label for="amount" class="form-label">Amount</label>
-                <input type="number" step="0.01" name="amount" id="amount" class="form-control" required>
+                <input type="number" name="amount" class="form-control" required>
             </div>
 
-            <!-- Currency -->
             <div class="mb-3">
                 <label for="currency" class="form-label">Currency</label>
-                <input type="text" name="currency" id="currency" class="form-control" placeholder="e.g. USD" required>
+                <input type="text" name="currency" class="form-control" required>
             </div>
 
-            <!-- Submit -->
-            <button type="submit" class="btn btn-primary">Send</button>
+            <button type="submit" class="btn btn-success">Send</button>
         </form>
     </div>
 </div>
 
-<!-- JavaScript -->
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    const searchInput = document.getElementById('searchSender');
-    const resultsDiv = document.getElementById('senderResults');
-    const receiverDropdown = document.getElementById('receiverDropdown');
+    const nameInput = document.getElementById('searchByName');
+    const phoneInput = document.getElementById('searchByPhone');
+    const senderCardList = document.getElementById('senderCardList');
+    const selectedSenderCard = document.getElementById('selectedSenderCard');
+    const receiverTable = document.getElementById('receiverTable');
+    const senderIdField = document.getElementById('senderId');
+    const receiverIdField = document.getElementById('receiverId');
+    const receiverTableCard = document.getElementById('receiverTableCard');
+    const notFoundDiv = document.getElementById('notFound');
 
-    searchInput.addEventListener('input', function () {
-        const query = this.value.trim();
-        if (query.length < 2) {
-            resultsDiv.innerHTML = '';
+    let selectedSenderId = null;
+
+    function searchSenders(query) {
+        if (!query) {
+            senderCardList.innerHTML = '';
+            notFoundDiv.classList.add('d-none');
             return;
         }
 
         fetch(`/search-sender/?q=${encodeURIComponent(query)}`)
             .then(response => response.json())
             .then(data => {
-                resultsDiv.innerHTML = '';
+                senderCardList.innerHTML = '';
+                selectedSenderCard.innerHTML = '';
+                receiverTableCard.classList.add('d-none');
+                notFoundDiv.classList.add('d-none');
+
                 if (data.length === 0) {
-                    const item = document.createElement('div');
-                    item.className = 'list-group-item text-danger';
-                    item.textContent = "No sender found. ";
-                    resultsDiv.appendChild(item);
+                    notFoundDiv.classList.remove('d-none');
                 } else {
                     data.forEach(sender => {
-                        const item = document.createElement('button');
-                        item.type = 'button';
-                        item.className = 'list-group-item list-group-item-action';
-                        item.textContent = `${sender.full_name} (${sender.phone})`;
-                        item.onclick = function () {
-                            searchInput.value = sender.full_name;
-                            document.getElementById('senderId').value = sender.id;
-                            resultsDiv.innerHTML = '';
-                            loadReceivers(sender.id);
-                        };
-                        resultsDiv.appendChild(item);
-                    });
-                }
-            })
-            .catch(error => {
-                console.error('Search error:', error);
-            });
-    });
-
-    function loadReceivers(senderId) {
-        fetch(`/get-receivers/?sender_id=${senderId}`)
-            .then(response => response.json())
-            .then(data => {
-                receiverDropdown.innerHTML = '<option value="">Select Receiver</option>';
-                if (data.length === 0) {
-                    const option = document.createElement('option');
-                    option.value = "";
-                    option.textContent = "No receivers found for this sender";
-                    receiverDropdown.appendChild(option);
-                } else {
-                    data.forEach(receiver => {
-                        const option = document.createElement('option');
-                        option.value = receiver.id;
-                        option.textContent = `${receiver.name} (${receiver.phone})`;
-                        receiverDropdown.appendChild(option);
+                        const card = document.createElement('div');
+                        card.className = 'col-md-6';
+                        card.innerHTML = `
+                            <div class="card shadow-sm">
+                                <div class="card-body">
+                                    <h5 class="card-title">${sender.full_name}</h5>
+                                    <p class="card-text">
+                                        <strong>Phone:</strong> ${sender.phone}<br>
+                                        <strong>ID:</strong> ${sender.id_number}
+                                    </p>
+                                    <button class="btn btn-outline-primary btn-sm select-sender">Select Sender</button>
+                                </div>
+                            </div>
+                        `;
+                        card.querySelector('.select-sender').addEventListener('click', function () {
+                            selectSender(sender);
+                        });
+                        senderCardList.appendChild(card);
                     });
                 }
             });
     }
+
+    function selectSender(sender) {
+        selectedSenderId = sender.id;
+        senderIdField.value = sender.id;
+
+        selectedSenderCard.innerHTML = `
+            <div class="card shadow-sm border-success">
+                <div class="card-body">
+                    <h5 class="card-title">${sender.full_name}</h5>
+                    <p class="card-text">
+                        <strong>Phone:</strong> ${sender.phone}<br>
+                        <strong>ID Number:</strong> ${sender.id_number}
+                    </p>
+                </div>
+            </div>
+        `;
+
+        senderCardList.innerHTML = ''; // Hide the list
+        loadReceivers(sender.id);
+    }
+
+    function loadReceivers(senderId) {
+        fetch(`/search-receivers/?sender_id=${senderId}`)
+            .then(response => response.json())
+            .then(data => {
+                const tbody = receiverTable.querySelector('tbody');
+                tbody.innerHTML = '';
+                receiverTableCard.classList.remove('d-none');
+
+                if (data.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="6" class="text-center text-danger">No receivers found for this sender.</td></tr>`;
+                } else {
+                    data.forEach(receiver => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${receiver.name}</td>
+                            <td>${receiver.phone}</td>
+                            <td>${receiver.country}</td>
+                            <td>${receiver.bank_name}</td>
+                            <td>${receiver.account_number}</td>
+                            <td>
+                                <button type="button" class="btn btn-sm btn-success" onclick="selectReceiver(${receiver.id})">Send to this Receiver</button>
+                            </td>
+                        `;
+                        tbody.appendChild(row);
+                    });
+                }
+            });
+    }
+
+    window.selectReceiver = function (receiverId) {
+        receiverIdField.value = receiverId;
+        alert("Receiver selected. Now fill the amount and currency.");
+    }
+
+    nameInput.addEventListener('input', () => {
+        if (nameInput.value.length > 1) {
+            searchSenders(nameInput.value);
+        }
+    });
+
+    phoneInput.addEventListener('input', () => {
+        if (phoneInput.value.length > 1) {
+            searchSenders(phoneInput.value);
+        }
+    });
 });
 </script>
 {% endblock %}

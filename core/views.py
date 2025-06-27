@@ -166,20 +166,15 @@ def register_sender(request):
 @group_required('Cashier')
 def search_sender(request):
     query = request.GET.get('q', '')
+    results = []
 
-    if len(query) < 2:
-            return JsonResponse({'not_found': True})  # Early exit if query too short
+    if query:
+        senders = Sender.objects.filter(
+            Q(full_name__icontains=query) | Q(phone__icontains=query)
+        ).values('id', 'full_name', 'phone', 'id_number')[:5]
 
-    senders = Sender.objects.filter(
-        Q(full_name__icontains=query) |
-        Q(phone__icontains=query) |
-        Q(id_number__icontains=query)
-    )
+        results = list(senders)
 
-    if not senders.exists():
-        return JsonResponse({'not_found': True})
-
-    results = [{'id': s.id, 'full_name': s.full_name, 'phone': s.phone} for s in senders]
     return JsonResponse(results, safe=False)
 
 
@@ -223,8 +218,12 @@ def register_receiver(request):
 
 @login_required
 @group_required('Cashier')
-def get_receivers_by_sender(request):
+def search_receivers(request):
     sender_id = request.GET.get('sender_id')
-    receivers = Receiver.objects.filter(sender_id=sender_id)
-    data = [{'id': r.id, 'name': r.name, 'phone': r.phone} for r in receivers]
-    return JsonResponse(data, safe=False)
+    receivers = []
+
+    if sender_id:
+        receivers_qs = Receiver.objects.filter(sender_id=sender_id).values('id', 'name', 'phone')
+        receivers = list(receivers_qs)
+
+    return JsonResponse(receivers, safe=False)
