@@ -9,7 +9,7 @@ from .decorators import group_required
 from django.utils import timezone
 from django.utils.timezone import now
 from django.db.models import Sum, Count, Q
-from .forms import SenderForm
+from .forms import SenderForm, TransactionUpdateForm
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 import random
@@ -356,3 +356,36 @@ def get_exchange_rate(request):
         return JsonResponse({'rate': float(rate_obj.rate)})
     else:
         return JsonResponse({'rate': 160})
+    
+
+@login_required
+@group_required('Accountant')
+def update_transaction(request, transaction_id):
+    transaction = get_object_or_404(Transaction, id=transaction_id)
+
+    if request.method == 'POST':
+        form = TransactionUpdateForm(request.POST, request.FILES, instance=transaction)
+        if form.is_valid():
+            updated_transaction = form.save(commit=False)
+            updated_transaction.updated_by = request.user
+            updated_transaction.save()
+            return JsonResponse({'success': True})
+        else:
+            return JsonResponse({'success': False, 'errors': form.errors.as_json()}, status=400)
+
+    else:
+        form = TransactionUpdateForm(instance=transaction)
+        return render(request, 'core/partial_update_transaction.html', {'form': form, 'transaction': transaction})
+    
+
+@login_required
+@group_required('Accountant')
+def transaction_detail(request, transaction_id):
+    transaction = get_object_or_404(Transaction, id=transaction_id)
+    return render(request, 'core/partial_transaction_detail.html', {'transaction': transaction})
+
+@login_required
+@group_required('Cashier')
+def cashier_transaction_detail(request, transaction_id):
+    transaction = get_object_or_404(Transaction, id=transaction_id)
+    return render(request, 'core/partial_transaction_detail.html', {'transaction': transaction})

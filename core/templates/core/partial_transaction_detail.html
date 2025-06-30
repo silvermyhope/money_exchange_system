@@ -1,0 +1,16 @@
+<div>
+    <p><strong>Sender:</strong> {{ transaction.sender.full_name }}</p>
+    <p><strong>Receiver:</strong> {{ transaction.receiver.name }}</p>
+    <p><strong>Amount:</strong> {{ transaction.amount }}</p>
+    <p><strong>Service Fee:</strong> {{ transaction.service_fee }}</p>
+    <p><strong>Exchanged Amount:</strong> {{ transaction.exchanged_amount }}</p>
+    <p><strong>Status:</strong> {{ transaction.status }}</p>
+    <p><strong>PIN:</strong> {{ transaction.pin }}</p>
+    <p><strong>Date:</strong> {{ transaction.created_at }}</p>
+    {% if transaction.receipt %}
+        <p><strong>Receipt:</strong><br>
+        <img src="{{ transaction.receipt.url }}" class="img-fluid" alt="Receipt"></p>
+    {% else %}
+        <p><strong>Receipt:</strong> Not uploaded</p>
+    {% endif %}
+</div>

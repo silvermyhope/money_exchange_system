@@ -1,5 +1,5 @@
 from django import forms
-from .models import Sender, Receiver
+from .models import Sender, Receiver, Transaction
 
 
 class SenderForm(forms.ModelForm):
@@ -22,3 +22,17 @@ class ReceiverForm(forms.ModelForm):
     class Meta:
         model = Receiver
         fields = ['sender', 'name', 'country', 'phone', 'bank_name', 'account_number']
+
+class TransactionUpdateForm(forms.ModelForm):
+    class Meta:
+        model = Transaction
+        fields = ['status', 'receipt']
+        widgets = {
+            'status': forms.Select(choices=[
+                ('Pending', 'Pending'),
+                ('Sent', 'Sent'),
+                ('Processing', 'Processing'),
+                ('Completed', 'Completed'),
+                ('Cancelled', 'Cancelled')
+            ])
+        }

@@ -1,4 +1,3 @@
-{# cashier_dashboard.html #}
 {% extends "base.html" %}
 {% load static %}
 
@@ -35,6 +34,7 @@
                     <th>Status</th>
                     <th>PIN</th>
                     <th>Sent Date</th>
+                    <th>Action</th>
                 </tr>
             </thead>
             <tbody>
@@ -49,10 +49,13 @@
                     <td>{{ transaction.status }}</td>
                     <td>{{ transaction.pin }}</td>
                     <td>{{ transaction.created_at|date:"M d, Y H:i" }}</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary detail-transaction-btn" data-id="{{ transaction.id }}">Details</button>
+                    </td>
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="9" class="text-center">No transactions yet.</td>
+                    <td colspan="10" class="text-center">No transactions yet.</td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -97,4 +100,38 @@
         </nav>
     </div>
 </div>
+
+<!-- Detail Transaction Modal -->
+<div class="modal fade" id="detailTransactionModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Transaction Details</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" id="detailTransactionModalBody">
+        <!-- Details will be loaded here -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const detailModal = new bootstrap.Modal(document.getElementById('detailTransactionModal'));
+
+    document.querySelectorAll('.detail-transaction-btn').forEach(button => {
+        button.addEventListener('click', function () {
+            const transactionId = this.getAttribute('data-id');
+            fetch(`/cashier/transactions/detail/${transactionId}/`)
+                .then(response => response.text())
+                .then(html => {
+                    document.getElementById('detailTransactionModalBody').innerHTML = html;
+                    detailModal.show();
+                });
+        });
+    });
+});
+</script>
+
 {% endblock %}

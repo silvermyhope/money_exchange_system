@@ -44,6 +44,8 @@
           <th>Status</th>
           <th>PIN</th>
           <th>Date</th>
+          <th>Actions</th>
+          <th>Details</th>
         </tr>
       </thead>
       <tbody>
@@ -58,6 +60,12 @@
             <td>{{ tx.status }}</td>
             <td>{{ tx.pin }}</td>
             <td>{{ tx.created_at|date:"Y-m-d H:i" }}</td>
+            <td>
+              <button class="btn btn-sm btn-outline-primary update-transaction-btn" data-id="{{ tx.id }}">Update</button>
+            </td>
+            <td>
+              <button class="btn btn-sm btn-outline-primary detail-transaction-btn" data-id="{{ tx.id }}">Details</button>
+            </td>
           </tr>
         {% empty %}
           <tr><td colspan="9" class="text-center">No transactions found.</td></tr>
@@ -104,4 +112,88 @@
     </div>
   </div>
 </div>
+
+<!-- Update Transaction Modal -->
+<div class="modal fade" id="updateTransactionModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Update Transaction</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" id="updateTransactionModalBody">
+        <!-- Form will be loaded here -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Detail Transaction Modal -->
+<div class="modal fade" id="detailTransactionModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Transaction Details</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" id="detailTransactionModalBody">
+        <!-- Details will be loaded here -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const modal = new bootstrap.Modal(document.getElementById('updateTransactionModal'));
+    const detailModal = new bootstrap.Modal(document.getElementById('detailTransactionModal'));
+
+    document.querySelectorAll('.update-transaction-btn').forEach(button => {
+        button.addEventListener('click', function () {
+            const transactionId = this.getAttribute('data-id');
+            fetch(`/transactions/update/${transactionId}/`)
+                .then(response => response.text())
+                .then(html => {
+                    document.getElementById('updateTransactionModalBody').innerHTML = html;
+                    const form = document.getElementById('updateTransactionForm');
+                    form.addEventListener('submit', function (e) {
+                        e.preventDefault();
+                        const formData = new FormData(form);
+                        fetch(`/transactions/update/${transactionId}/`, {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRFToken': form.querySelector('[name=csrfmiddlewaretoken]').value
+                            },
+                            body: formData
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                modal.hide();
+                                location.reload();
+                            } else {
+                                document.getElementById('updateTransactionModalBody').innerHTML = data.errors;
+                            }
+                        });
+                    });
+                    modal.show();
+                });
+        });
+    });
+
+    document.querySelectorAll('.detail-transaction-btn').forEach(button => {
+        button.addEventListener('click', function () {
+            const transactionId = this.getAttribute('data-id');
+            fetch(`/transactions/detail/${transactionId}/`)
+                .then(response => response.text())
+                .then(html => {
+                    document.getElementById('detailTransactionModalBody').innerHTML = html;
+                    detailModal.show();
+                });
+        });
+    });
+
+});
+</script>
+
 {% endblock %}

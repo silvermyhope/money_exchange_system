@@ -49,27 +49,21 @@ class Transaction(models.Model):
     currency = models.CharField(max_length=10)
     exchanged_amount = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
     service_fee = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    receipt = models.ImageField(upload_to='receipts/', null=True, blank=True)
+    updated_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='accountant_updates')
     status = models.CharField(max_length=20, choices=[
         ('Pending', 'Pending'),
         ('Processing', 'Processing'),
+        ('Sent', 'Sent'),
         ('Completed', 'Completed'),
         ('Cancelled', 'Cancelled')
     ])
     pin = models.CharField(max_length=6, unique=True, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def generate_pin(self):
         return ''.join(random.choices(string.digits, k=6))
-
-    def calculate_exchange_and_fee(self):
-        today = timezone.now().date()
-        try:
-            rate_obj = ExchangeRate.objects.get(date=today, from_currency=self.currency, to_currency='USD')
-            self.exchanged_amount = self.amount * rate_obj.rate
-            self.service_fee = self.amount * 0.05  # 5% fee example
-        except ExchangeRate.DoesNotExist:
-            self.exchanged_amount = None
-            self.service_fee = None
 
     def save(self, *args, **kwargs):
         if not self.pin:
