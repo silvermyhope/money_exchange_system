@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Sender, Transaction, Receiver
+from .models import Sender, Transaction, Receiver, ExchangeRate
 
 @admin.register(Transaction)
 class TransactionAdmin(admin.ModelAdmin):
@@ -16,3 +16,6 @@ class SenderAdmin(admin.ModelAdmin):
 class ReceiverAdmin(admin.ModelAdmin):
     list_display = ('name', 'country', 'phone', 'bank_name', 'sender', 'account_number')
     search_fields = ('name', 'country', 'phone')
+
+
+admin.site.register(ExchangeRate)

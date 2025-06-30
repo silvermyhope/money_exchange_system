@@ -1,3 +1,4 @@
+{# cashier_dashboard.html #}
 {% extends "base.html" %}
 {% load static %}
 
@@ -20,36 +21,80 @@
         </div>
     </div>
 
-    <h4 class="text-gold mb-3">Recent Transactions</h4>
+    <h4 class="text-gold mb-3">Transactions</h4>
     <div class="table-responsive">
         <table class="table table-bordered table-hover bg-white text-dark">
             <thead class="bg-gold text-white">
                 <tr>
                     <th>#</th>
+                    <th>Sender</th>
                     <th>Receiver</th>
-                    <th>Amount</th>
-                    <th>Currency</th>
+                    <th>Amount Sent</th>
+                    <th>Service Fee</th>
+                    <th>Exchanged Amount</th>
                     <th>Status</th>
-                    <th>Date</th>
+                    <th>PIN</th>
+                    <th>Sent Date</th>
                 </tr>
             </thead>
             <tbody>
-                {% for transaction in recent_transactions %}
+                {% for transaction in page_obj %}
                 <tr>
                     <td>{{ forloop.counter }}</td>
+                    <td>{{ transaction.sender.full_name }}</td>
                     <td>{{ transaction.receiver.name }}</td>
                     <td>{{ transaction.amount }}</td>
-                    <td>{{ transaction.currency }}</td>
+                    <td>{{ transaction.service_fee }}</td>
+                    <td>{{ transaction.exchanged_amount }}</td>
                     <td>{{ transaction.status }}</td>
+                    <td>{{ transaction.pin }}</td>
                     <td>{{ transaction.created_at|date:"M d, Y H:i" }}</td>
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="6" class="text-center">No transactions yet.</td>
+                    <td colspan="9" class="text-center">No transactions yet.</td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
+    </div>
+
+    <div class="d-flex justify-content-center">
+        <nav>
+            <ul class="pagination">
+                {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">Previous</span>
+                </li>
+                {% endif %}
+
+                {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ num }}</span>
+                        </li>
+                    {% else %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">Next</span>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
     </div>
 </div>
 {% endblock %}

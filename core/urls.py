@@ -14,4 +14,11 @@ urlpatterns = [
     path('search-sender/', views.search_sender, name='search_sender'),
     path('register-receiver/', views.register_receiver, name='register_receiver'),
     path('search-receivers/', views.search_receivers, name='search_receivers'),
+
+    path('ajax/register-receiver/', views.ajax_register_receiver, name='ajax_register_receiver'),
+    path('ajax/register-sender/', views.ajax_register_sender, name='ajax_register_sender'),
+     path('exchange-rates/', views.exchange_rates, name='exchange_rates'),
+    path('exchange-rates/add/', views.add_exchange_rate, name='add_exchange_rate'),
+    path('get-exchange-rate/', views.get_exchange_rate, name='get_exchange_rate'),
+
 ]

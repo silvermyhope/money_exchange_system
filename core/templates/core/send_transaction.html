@@ -11,7 +11,11 @@
             {% endfor %}
         {% endif %}
 
-        <!-- Search Inputs -->
+        <div class="mb-3">
+            <strong>Today's Exchange Rate (to ETB):</strong> <span id="exchangeRate">{{ exchange_rate }}</span><br>
+            <strong>Service Fee:</strong> {{ service_fee_percent }}%
+        </div>
+
         <div class="row g-3 mb-4">
             <div class="col-md-6">
                 <input type="text" id="searchByName" class="form-control" placeholder="Search sender by name">
@@ -21,20 +25,18 @@
             </div>
         </div>
 
-        <!-- Sender Selection Cards -->
         <div id="senderCardList" class="row g-3 mb-4"></div>
-
-        <!-- Selected Sender Display -->
         <div id="selectedSenderCard" class="mb-4"></div>
 
-        <!-- Not Found -->
         <div id="notFound" class="alert alert-warning d-none">
-            Sender not found. <a href="{% url 'register_sender' %}" class="btn btn-sm btn-outline-primary ms-2">Register New Sender</a>
+            Sender not found. <button type="button" class="btn btn-sm btn-outline-primary ms-2" data-bs-toggle="modal" data-bs-target="#newSenderModal">Register New Sender</button>
         </div>
 
-        <!-- Receiver Table -->
         <div id="receiverTableCard" class="card mb-4 d-none">
-            <div class="card-header">Receivers</div>
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span>Receivers</span>
+                <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#newReceiverModal">+ Register New Receiver</button>
+            </div>
             <div class="card-body">
                 <table class="table table-bordered table-striped" id="receiverTable">
                     <thead>
@@ -47,25 +49,34 @@
                             <th>Action</th>
                         </tr>
                     </thead>
-                    <tbody></tbody>
+                    <tbody id="receiverTableBody"></tbody>
                 </table>
             </div>
         </div>
 
-        <!-- Send Form -->
-        <form method="POST">
+        <div id="selectedReceiverCard" class="mb-4 d-none"></div>
+
+        <form method="POST" id="sendTransactionForm">
             {% csrf_token %}
             <input type="hidden" name="sender_id" id="senderId">
             <input type="hidden" name="receiver" id="receiverId">
+            <input type="hidden" name="exchanged_amount" id="exchangedAmountInput">
+            <input type="hidden" name="service_fee" id="serviceFeeInput">
 
             <div class="mb-3">
                 <label for="amount" class="form-label">Amount</label>
-                <input type="number" name="amount" class="form-control" required>
+                <input type="number" name="amount" id="amountInput" class="form-control" required>
             </div>
 
             <div class="mb-3">
                 <label for="currency" class="form-label">Currency</label>
-                <input type="text" name="currency" class="form-control" required>
+                <input type="text" name="currency" id="currencyInput" class="form-control" required>
+            </div>
+
+            <div class="mb-3">
+                <strong>Amount After Fee:</strong> <span id="amountAfterFee">0.00</span><br>
+                <strong>Exchanged Amount (ETB):</strong> <span id="exchangedAmount">0.00</span><br>
+                <strong>Service Fee:</strong> <span id="serviceFee">0.00</span>
             </div>
 
             <button type="submit" class="btn btn-success">Send</button>
@@ -73,19 +84,122 @@
     </div>
 </div>
 
+<!-- New Sender Modal -->
+<div class="modal fade" id="newSenderModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <form id="senderForm" class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Register New Sender</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body row g-3">
+        <div class="col-md-6">
+          <label class="form-label">Full Name</label>
+          <input name="full_name" class="form-control" required>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Phone</label>
+          <input name="phone" class="form-control" required>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Address</label>
+          <input name="address" class="form-control" required>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">DOB</label>
+          <input name="dob" type="date" class="form-control" required>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">ID Number</label>
+          <input name="id_number" class="form-control" required>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">ID Issued Date</label>
+          <input name="id_issued_date" type="date" class="form-control" required>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">ID Expiry Date</label>
+          <input name="id_expiry_date" type="date" class="form-control" required>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="submit" class="btn btn-primary">Register Sender</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- New Receiver Modal -->
+<div class="modal fade" id="newReceiverModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <form id="receiverForm" class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Register New Receiver</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body row g-3">
+        <input type="hidden" name="sender_id" id="modalSenderId">
+        <div class="col-md-6"><input name="name" class="form-control" placeholder="Receiver Name" required></div>
+        <div class="col-md-6"><input name="phone" class="form-control" placeholder="Phone" required></div>
+        <div class="col-md-6"><input name="country" class="form-control" placeholder="Country" required></div>
+        <div class="col-md-6"><input name="bank_name" class="form-control" placeholder="Bank Name" required></div>
+        <div class="col-md-6"><input name="account_number" class="form-control" placeholder="Account Number" required></div>
+      </div>
+      <div class="modal-footer">
+        <button type="submit" class="btn btn-primary">Register Receiver</button>
+      </div>
+    </form>
+  </div>
+</div>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const nameInput = document.getElementById('searchByName');
     const phoneInput = document.getElementById('searchByPhone');
     const senderCardList = document.getElementById('senderCardList');
     const selectedSenderCard = document.getElementById('selectedSenderCard');
-    const receiverTable = document.getElementById('receiverTable');
+    const receiverTableBody = document.getElementById('receiverTableBody');
     const senderIdField = document.getElementById('senderId');
     const receiverIdField = document.getElementById('receiverId');
     const receiverTableCard = document.getElementById('receiverTableCard');
     const notFoundDiv = document.getElementById('notFound');
+    const receiverForm = document.getElementById('receiverForm');
+    const modalSenderId = document.getElementById('modalSenderId');
+    const senderForm = document.getElementById('senderForm');
+    const selectedReceiverCard = document.getElementById('selectedReceiverCard');
 
-    let selectedSenderId = null;
+
+    const exchangeRate = parseFloat(document.getElementById('exchangeRate').textContent);
+    const serviceFeePercent = {{ service_fee_percent }};
+    const amountInput = document.getElementById('amountInput');
+    const amountAfterFee = document.getElementById('amountAfterFee');
+    const exchangedAmount = document.getElementById('exchangedAmount');
+    const serviceFee = document.getElementById('serviceFee');
+    const exchangedAmountInput = document.getElementById('exchangedAmountInput');
+    const serviceFeeInput = document.getElementById('serviceFeeInput');
+
+
+
+amountInput.addEventListener('input', function () {
+        const amt = parseFloat(this.value);
+        if (!isNaN(amt)) {
+            const fee = amt * (serviceFeePercent / 100);
+            const netAmount = amt - fee;
+            const exchanged = netAmount * exchangeRate;
+
+            serviceFee.textContent = fee.toFixed(2);
+            amountAfterFee.textContent = netAmount.toFixed(2);
+            exchangedAmount.textContent = exchanged.toFixed(2);
+
+            serviceFeeInput.value = fee.toFixed(2);
+            exchangedAmountInput.value = exchanged.toFixed(2);
+        } else {
+            serviceFee.textContent = '0.00';
+            amountAfterFee.textContent = '0.00';
+            exchangedAmount.textContent = '0.00';
+            serviceFeeInput.value = '';
+            exchangedAmountInput.value = '';
+        }
+    });
 
     function searchSenders(query) {
         if (!query) {
@@ -95,7 +209,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         fetch(`/search-sender/?q=${encodeURIComponent(query)}`)
-            .then(response => response.json())
+            .then(res => res.json())
             .then(data => {
                 senderCardList.innerHTML = '';
                 selectedSenderCard.innerHTML = '';
@@ -130,8 +244,8 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function selectSender(sender) {
-        selectedSenderId = sender.id;
         senderIdField.value = sender.id;
+        modalSenderId.value = sender.id;
 
         selectedSenderCard.innerHTML = `
             <div class="card shadow-sm border-success">
@@ -145,20 +259,26 @@ document.addEventListener('DOMContentLoaded', function () {
             </div>
         `;
 
-        senderCardList.innerHTML = ''; // Hide the list
+        senderCardList.innerHTML = '';
+        selectedReceiverCard.classList.add('d-none');
         loadReceivers(sender.id);
     }
 
     function loadReceivers(senderId) {
         fetch(`/search-receivers/?sender_id=${senderId}`)
-            .then(response => response.json())
+            .then(res => res.json())
             .then(data => {
-                const tbody = receiverTable.querySelector('tbody');
-                tbody.innerHTML = '';
+                receiverTableBody.innerHTML = '';
                 receiverTableCard.classList.remove('d-none');
 
                 if (data.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="6" class="text-center text-danger">No receivers found for this sender.</td></tr>`;
+                    receiverTableBody.innerHTML = `
+                        <tr><td colspan="6" class="text-center text-danger">
+                            No receivers found for this sender.
+                            <button class="btn btn-outline-primary btn-sm ms-2" data-bs-toggle="modal" data-bs-target="#newReceiverModal">
+                                Register New Receiver
+                            </button>
+                        </td></tr>`;
                 } else {
                     data.forEach(receiver => {
                         const row = document.createElement('tr');
@@ -169,30 +289,98 @@ document.addEventListener('DOMContentLoaded', function () {
                             <td>${receiver.bank_name}</td>
                             <td>${receiver.account_number}</td>
                             <td>
-                                <button type="button" class="btn btn-sm btn-success" onclick="selectReceiver(${receiver.id})">Send to this Receiver</button>
+                                <button type="button" class="btn btn-sm btn-success" onclick='selectReceiver(${JSON.stringify(receiver)})'>
+                                    Send to this Receiver
+                                </button>
                             </td>
                         `;
-                        tbody.appendChild(row);
+                        receiverTableBody.appendChild(row);
                     });
                 }
             });
     }
 
-    window.selectReceiver = function (receiverId) {
-        receiverIdField.value = receiverId;
-        alert("Receiver selected. Now fill the amount and currency.");
+    senderForm.addEventListener('submit', function (e) {
+    e.preventDefault();
+    const formData = new FormData(senderForm);
+
+    fetch('/ajax/register-sender/', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.status === 'success') {
+            bootstrap.Modal.getInstance(document.getElementById('newSenderModal')).hide();
+            senderForm.reset();
+            // auto-select the new sender
+            selectSender(data.sender);
+        }
+    });
+});
+
+    window.selectReceiver = function (receiver) {
+        receiverIdField.value = receiver.id;
+
+        selectedReceiverCard.innerHTML = `
+            <div class="card shadow-sm border-primary">
+                <div class="card-body">
+                    <h5 class="card-title">${receiver.name}</h5>
+                    <p class="card-text">
+                        <strong>Phone:</strong> ${receiver.phone}<br>
+                        <strong>Country:</strong> ${receiver.country}<br>
+                        <strong>Bank:</strong> ${receiver.bank_name}<br>
+                        <strong>Account #:</strong> ${receiver.account_number}
+                    </p>
+                </div>
+            </div>
+        `;
+        selectedReceiverCard.classList.remove('d-none');
     }
 
     nameInput.addEventListener('input', () => {
-        if (nameInput.value.length > 1) {
-            searchSenders(nameInput.value);
-        }
+        if (nameInput.value.length > 1) searchSenders(nameInput.value);
     });
 
     phoneInput.addEventListener('input', () => {
-        if (phoneInput.value.length > 1) {
-            searchSenders(phoneInput.value);
-        }
+        if (phoneInput.value.length > 1) searchSenders(phoneInput.value);
+    });
+
+    receiverForm.addEventListener('submit', function (e) {
+        e.preventDefault();
+        const formData = new FormData(receiverForm);
+        fetch('/ajax/register-receiver/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'success') {
+                const r = data.receiver;
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${r.name}</td>
+                    <td>${r.phone}</td>
+                    <td>${r.country}</td>
+                    <td>${r.bank_name}</td>
+                    <td>${r.account_number}</td>
+                    <td>
+                        <button type="button" class="btn btn-sm btn-success" onclick='selectReceiver(${JSON.stringify(r)})'>
+                            Send to this Receiver
+                        </button>
+                    </td>
+                `;
+                receiverTableBody.appendChild(row);
+                bootstrap.Modal.getInstance(document.getElementById('newReceiverModal')).hide();
+                receiverForm.reset();
+            }
+        });
     });
 });
 </script>
