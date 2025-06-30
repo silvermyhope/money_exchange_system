@@ -18,6 +18,12 @@ from decimal import Decimal, InvalidOperation
 from django.core.paginator import Paginator
 
 
+
+def home(request):
+    return render(request, 'core/index.html')
+
+
+
 class RoleBasedLoginView(LoginView):
     template_name = 'registration/login.html'  # Or wherever your template is
 
@@ -136,50 +142,17 @@ def send_transaction(request):
 @login_required
 def transaction_list(request):
     if request.user.groups.filter(name='Cashier').exists():
-        transactions = Transaction.objects.filter(cashier=request.user)
+        transactions = Transaction.objects.filter(cashier=request.user).order_by('-created_at')
     elif request.user.groups.filter(name='Accountant').exists():
-        transactions = Transaction.objects.all()
+        transactions = Transaction.objects.all().order_by('-created_at')
     else:
         return HttpResponseForbidden("You are not allowed to view transactions.")
 
-    return render(request, 'core/transaction_list.html', {'transactions': transactions})
+    paginator = Paginator(transactions, 10)  # 10 transactions per page
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
 
-
-def home(request):
-    return render(request, 'core/index.html')
-
-
-# @login_required
-# @group_required('Cashier')
-# def search_or_register_sender(request):
-#     query = request.GET.get('query', '')
-#     sender_results = []
-#     if query:
-#         sender_results = Sender.objects.filter(
-#             Q(full_name__icontains=query) |
-#             Q(phone__icontains=query) |
-#             Q(id_number__icontains=query)
-#         )
-
-#     if request.method == 'POST':
-#         form = SenderForm(request.POST)
-#         if form.is_valid():
-#             form.save()
-#             messages.success(request, "Sender registered successfully.")
-#             return redirect('search_or_register_sender')
-#     else:
-#         form = SenderForm()
-
-#     return render(request, 'core/search_or_register_sender.html', {
-#         'form': form,
-#         'sender_results': sender_results,
-#         'query': query
-#     })
-
-
-
-
-
+    return render(request, 'core/transaction_list.html', {'page_obj': page_obj})
 
 
 @login_required
@@ -379,13 +352,12 @@ def update_transaction(request, transaction_id):
     
 
 @login_required
-@group_required('Accountant')
 def transaction_detail(request, transaction_id):
     transaction = get_object_or_404(Transaction, id=transaction_id)
-    return render(request, 'core/partial_transaction_detail.html', {'transaction': transaction})
 
-@login_required
-@group_required('Cashier')
-def cashier_transaction_detail(request, transaction_id):
-    transaction = get_object_or_404(Transaction, id=transaction_id)
+    # Restrict access: Cashiers can only view their own transactions
+    if request.user.groups.filter(name='Cashier').exists():
+        if transaction.cashier != request.user:
+            return HttpResponseForbidden('Access denied.')
+
     return render(request, 'core/partial_transaction_detail.html', {'transaction': transaction})

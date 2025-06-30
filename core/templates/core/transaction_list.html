@@ -1,44 +1,128 @@
 {% extends 'base.html' %}
+{% load static %}
+
 {% block content %}
-<div class="container mb-5">
-  <div class="bg-white">
-    <h2 class="mb-4">Transaction List</h2>
+<div class="container mt-5">
+    <h2 class="text-gold mb-4">Transaction List</h2>
+
     {% if messages %}
-    {% for message in messages %}
-      <div class="alert alert-success">{{ message }}</div>
-    {% endfor %}
-  {% endif %}
-  
+      {% for message in messages %}
+        <div class="alert alert-success">{{ message }}</div>
+      {% endfor %}
+    {% endif %}
+
     {% if group == 'Cashier' %}
-    <a href="{% url 'send_transaction' %}" class="btn btn-primary mb-3">Send Money</a>
+    <a href="{% url 'send_transaction' %}" class="btn btn-outline-gold mb-3">Send Money</a>
     {% endif %}
 
     <div class="table-responsive">
-      <table class="table table-bordered table-striped">
-        <thead>
-          <tr>
-            <th>Sender</th>
-            <th>Receiver</th>
-            <th>Amount</th>
-            <th>Currency</th>
-            <th>Status</th>
-            <th>Date</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for tx in transactions %}
-          <tr>
-            <td>{{ tx.sender.full_name }}</td>
-            <td>{{ tx.receiver.name }}</td>
-            <td>{{ tx.amount }}</td>
-            <td>{{ tx.currency }}</td>
-            <td>{{ tx.status }}</td>
-            <td>{{ tx.created_at|date:"Y-m-d H:i" }}</td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+        <table class="table table-bordered table-hover bg-white text-dark">
+            <thead class="bg-gold text-white">
+                <tr>
+                    <th>#</th>
+                    <th>Sender</th>
+                    <th>Receiver</th>
+                    <th>Amount</th>
+                    <th>Currency</th>
+                    <th>Exchanged Amount</th>
+                    <th>Status</th>
+                    <th>Date</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for tx in page_obj %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ tx.sender.full_name }}</td>
+                    <td>{{ tx.receiver.name }}</td>
+                    <td>{{ tx.amount }}</td>
+                    <td>{{ tx.currency }}</td>
+                    <td>{{ tx.exchanged_amount }}</td>
+                    <td>{{ tx.status }}</td>
+                    <td>{{ tx.created_at|date:"M d, Y H:i" }}</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary detail-transaction-btn" data-id="{{ tx.id }}">Details</button>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="9" class="text-center">No transactions found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="d-flex justify-content-center mt-4">
+        <nav>
+            <ul class="pagination">
+                {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">Previous</span>
+                </li>
+                {% endif %}
+
+                {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ num }}</span>
+                        </li>
+                    {% else %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">Next</span>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+</div>
+
+<!-- Detail Transaction Modal -->
+<div class="modal fade" id="detailTransactionModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Transaction Details</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" id="detailTransactionModalBody">
+        <!-- Details will be loaded here -->
+      </div>
     </div>
   </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const detailModal = new bootstrap.Modal(document.getElementById('detailTransactionModal'));
+
+    document.querySelectorAll('.detail-transaction-btn').forEach(button => {
+        button.addEventListener('click', function () {
+            const transactionId = this.getAttribute('data-id');
+            fetch(`/transactions/detail/${transactionId}/`)
+                .then(response => response.text())
+                .then(html => {
+                    document.getElementById('detailTransactionModalBody').innerHTML = html;
+                    detailModal.show();
+                });
+        });
+    });
+});
+</script>
 {% endblock %}

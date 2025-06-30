@@ -25,7 +25,6 @@ urlpatterns = [
 
     path('transactions/update/<int:transaction_id>/', views.update_transaction, name='update_transaction'),
     path('transactions/detail/<int:transaction_id>/', views.transaction_detail, name='transaction_detail'),
-    path('cashier/transactions/detail/<int:transaction_id>/', views.cashier_transaction_detail, name='cashier_transaction_detail'),
 
 ]
 

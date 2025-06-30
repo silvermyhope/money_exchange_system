@@ -123,7 +123,7 @@ document.addEventListener('DOMContentLoaded', function () {
     document.querySelectorAll('.detail-transaction-btn').forEach(button => {
         button.addEventListener('click', function () {
             const transactionId = this.getAttribute('data-id');
-            fetch(`/cashier/transactions/detail/${transactionId}/`)
+            fetch(`/transactions/detail/${transactionId}/`)
                 .then(response => response.text())
                 .then(html => {
                     document.getElementById('detailTransactionModalBody').innerHTML = html;
