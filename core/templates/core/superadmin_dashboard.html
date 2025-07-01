@@ -1,0 +1,165 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<div class="container py-5">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>Superadmin Dashboard</h2>
+    <div>
+        <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addUserModal">Add New User</button>
+        <button class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#addRoleModal">
+            Add New Role
+        </button>
+    </div>
+  </div>
+
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
+
+  <table class="table table-bordered">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Username</th>
+        <th>Email</th>
+        <th>Groups</th>
+        <th>Date Joined</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for user in users %}
+      <tr>
+        <td>{{ forloop.counter }}</td>
+        <td>{{ user.username }}</td>
+        <td>{{ user.email }}</td>
+        <td>
+          {% for group in user.groups.all %}
+            <span class="badge bg-secondary">{{ group.name }}</span>
+          {% empty %}
+            <span class="text-muted">No Role</span>
+          {% endfor %}
+        </td>
+        <td>{{ user.date_joined|date:"Y-m-d H:i" }}</td>
+        <td>
+            <button class="btn btn-sm btn-outline-primary edit-user-btn" data-user-id="{{ user.id }}">Edit</button>
+            <button class="btn btn-sm btn-outline-danger delete-user-btn"
+                data-user-id="{{ user.id }}"
+                data-username="{{ user.username }}"
+                data-bs-toggle="modal"
+                data-bs-target="#deleteUserModal">
+                Delete
+            </button>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+
+</div>
+
+<!-- Add User Modal -->
+<div class="modal fade" id="addUserModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="post" action="{% url 'create_user' %}">
+        {% csrf_token %}
+        <div class="modal-header">
+          <h5 class="modal-title">Add New User</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          {{ form.as_p }}
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">Create</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Edit User Modal -->
+<div class="modal fade" id="editUserModal" tabindex="-1" aria-labelledby="editUserModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content" id="editUserModalContent">
+      <!-- Content loaded via AJAX -->
+    </div>
+  </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteUserModal" tabindex="-1" aria-labelledby="deleteUserModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="post" id="deleteUserForm">
+        {% csrf_token %}
+        <div class="modal-header">
+          <h5 class="modal-title" id="deleteUserModalLabel">Confirm Delete</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p>Are you sure you want to delete user <strong id="deleteUsername"></strong>?</p>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-danger">Delete</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Add Role Modal -->
+<div class="modal fade" id="addRoleModal" tabindex="-1" aria-labelledby="addRoleModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="post" action="{% url 'manage_groups' %}">
+        {% csrf_token %}
+        <div class="modal-header">
+          <h5 class="modal-title" id="addRoleModalLabel">Add New Role</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="group_name" class="form-label">Role Name</label>
+            <input type="text" name="group_name" id="group_name" class="form-control" required>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">Create Role</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+
+<script>
+  document.querySelectorAll('.edit-user-btn').forEach(button => {
+    button.addEventListener('click', function () {
+      const userId = this.getAttribute('data-user-id');
+      fetch(`/superadmin/user/edit/${userId}/`)
+        .then(response => response.text())
+        .then(html => {
+          document.getElementById('editUserModalContent').innerHTML = html;
+          new bootstrap.Modal(document.getElementById('editUserModal')).show();
+        });
+    });
+  });
+
+  document.querySelectorAll('.delete-user-btn').forEach(button => {
+    button.addEventListener('click', function () {
+      const userId = this.getAttribute('data-user-id');
+      const username = this.getAttribute('data-username');
+
+      document.getElementById('deleteUsername').textContent = username;
+      document.getElementById('deleteUserForm').action = `/superadmin/user/delete/${userId}/`;
+    });
+  });
+</script>
+{% endblock %}

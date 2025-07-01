@@ -28,6 +28,7 @@
                     <th>Status</th>
                     <th>Date</th>
                     <th>Action</th>
+                    <th>Print</th>
                 </tr>
             </thead>
             <tbody>
@@ -43,6 +44,9 @@
                     <td>{{ tx.created_at|date:"M d, Y H:i" }}</td>
                     <td>
                         <button class="btn btn-sm btn-outline-primary detail-transaction-btn" data-id="{{ tx.id }}">Details</button>
+                    </td>
+                    <td>
+                        <a href="{% url 'print_receipt' tx.id %}" class="btn btn-sm btn-outline-dark">Print Receipt</a>
                     </td>
                 </tr>
                 {% empty %}

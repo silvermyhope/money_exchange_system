@@ -26,6 +26,14 @@ urlpatterns = [
     path('transactions/update/<int:transaction_id>/', views.update_transaction, name='update_transaction'),
     path('transactions/detail/<int:transaction_id>/', views.transaction_detail, name='transaction_detail'),
 
+    path('superadmin/dashboard/', views.superadmin_dashboard, name='superadmin_dashboard'),
+    path('superadmin/user/add/', views.create_user, name='create_user'),
+    path('superadmin/user/edit/<int:user_id>/', views.edit_user, name='edit_user'),
+    path('superadmin/user/delete/<int:user_id>/', views.delete_user, name='delete_user'),
+    path('superadmin/groups/add/', views.manage_groups, name='manage_groups'),
+
+    path('transactions/receipt/<int:transaction_id>/', views.print_receipt, name='print_receipt'),
+
 ]
 
 if settings.DEBUG:

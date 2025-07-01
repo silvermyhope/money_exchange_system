@@ -1,0 +1,5 @@
+<form method="post">
+  {% csrf_token %}
+  <p>Delete user <strong>{{ user.username }}</strong>?</p>
+  <button class="btn btn-danger">Confirm Delete</button>
+</form>

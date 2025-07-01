@@ -1,5 +1,6 @@
 from django import forms
 from .models import Sender, Receiver, Transaction
+from django.contrib.auth.models import User, Group
 
 
 class SenderForm(forms.ModelForm):
@@ -36,3 +37,16 @@ class TransactionUpdateForm(forms.ModelForm):
                 ('Cancelled', 'Cancelled')
             ])
         }
+
+
+class UserForm(forms.ModelForm):
+    password = forms.CharField(widget=forms.PasswordInput(), required=False)
+    groups = forms.ModelMultipleChoiceField(
+        queryset=Group.objects.all(),
+        widget=forms.SelectMultiple(attrs={'class': 'form-control'}),
+        required=False
+    )
+
+    class Meta:
+        model = User
+        fields = ['username', 'email', 'password', 'groups']

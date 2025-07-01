@@ -1,7 +1,8 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import Transaction, Sender, Receiver, ExchangeRate
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.models import User, Group
+from django.contrib.admin.views.decorators import staff_member_required
 from django.http import HttpResponse, HttpResponseForbidden, JsonResponse
 from django.contrib.auth.views import LoginView
 from django.contrib import messages
@@ -9,7 +10,7 @@ from .decorators import group_required
 from django.utils import timezone
 from django.utils.timezone import now
 from django.db.models import Sum, Count, Q
-from .forms import SenderForm, TransactionUpdateForm
+from .forms import SenderForm, TransactionUpdateForm, UserForm
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 import random
@@ -22,16 +23,77 @@ from django.core.paginator import Paginator
 def home(request):
     return render(request, 'core/index.html')
 
+@staff_member_required
+def superadmin_dashboard(request):
+    users = User.objects.all().order_by('-date_joined')
+    form = UserForm()
+    return render(request, 'core/superadmin_dashboard.html', {'users': users, 'form': form})
 
+@staff_member_required
+def create_user(request):
+    if request.method == 'POST':
+        form = UserForm(request.POST)
+        if form.is_valid():
+            user = form.save(commit=False)
+            if form.cleaned_data['password']:
+                user.set_password(form.cleaned_data['password'])
+            user.save()
+            form.save_m2m()
+            messages.success(request, 'User created successfully.')
+        else:
+            messages.error(request, 'Failed to create user.')
+    return redirect('superadmin_dashboard')
+
+@staff_member_required
+def edit_user(request, user_id):
+    user = get_object_or_404(User, id=user_id)
+    if request.method == 'POST':
+        form = UserForm(request.POST, instance=user)
+        if form.is_valid():
+            user = form.save(commit=False)
+            if form.cleaned_data['password']:
+                user.set_password(form.cleaned_data['password'])
+            user.save()
+            form.save_m2m()
+            messages.success(request, 'User updated successfully.')
+            return redirect('superadmin_dashboard')
+        else:
+            messages.error(request, 'Failed to update user.')
+    else:
+        form = UserForm(instance=user)
+    return render(request, 'core/partial_user_form.html', {'form': form, 'user': user})
+
+
+@staff_member_required
+@require_POST
+def delete_user(request, user_id):
+    user = get_object_or_404(User, id=user_id)
+    user.delete()
+    messages.success(request, 'User deleted successfully.')
+    return redirect('superadmin_dashboard')
+
+@staff_member_required
+def manage_groups(request):
+    if request.method == 'POST':
+        group_name = request.POST.get('group_name')
+        if group_name:
+            Group.objects.get_or_create(name=group_name)
+            messages.success(request, f'Role "{group_name}" created successfully.')
+        else:
+            messages.error(request, "Role name cannot be empty.")
+        return redirect('superadmin_dashboard')
 
 class RoleBasedLoginView(LoginView):
-    template_name = 'registration/login.html'  # Or wherever your template is
+    template_name = 'registration/login.html'
 
     def get_success_url(self):
         user = self.request.user
         print("Login success for:", user.username)
 
-        if user.groups.filter(name='Cashier').exists():
+        if user.is_superuser:
+            print("Redirecting to superadmin dashboard")
+            return '/superadmin/dashboard/'
+        elif user.groups.filter(name='Cashier').exists():
             print("Redirecting to cashier dashboard")
             return '/cashier/dashboard/'
         elif user.groups.filter(name='Accountant').exists():
@@ -361,3 +423,17 @@ def transaction_detail(request, transaction_id):
             return HttpResponseForbidden('Access denied.')
 
     return render(request, 'core/partial_transaction_detail.html', {'transaction': transaction})
+
+
+@login_required
+@group_required('Cashier')
+def print_receipt(request, transaction_id):
+    transaction = get_object_or_404(Transaction, id=transaction_id)
+    sender = transaction.sender
+    receiver = transaction.receiver
+
+    return render(request, 'core/receipt.html', {
+        'transaction': transaction,
+        'sender': sender,
+        'receiver': receiver,
+    })
