@@ -31,7 +31,12 @@ SECRET_KEY = 'django-insecure-=5x@cls_aim3x4sjl_%ki$v(nkc4%qb+d($t*7-k7bm5ete=$)
 DEBUG = True
 
 # ALLOWED_HOSTS = ['artharemittance.com', 'www.artharemittance.com']
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+     'artharemittance.onrender.com',
+    'www.artharemittance.com',  # You'll use this later when pointing the domain
+    'localhost',
+    '127.0.0.1',
+]
 
 # Application definition
 
