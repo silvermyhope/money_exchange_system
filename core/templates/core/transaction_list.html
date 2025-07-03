@@ -19,34 +19,52 @@
         <table class="table table-bordered table-hover bg-white text-dark">
             <thead class="bg-gold text-white">
                 <tr>
-                    <th>#</th>
-                    <th>Sender</th>
-                    <th>Receiver</th>
-                    <th>Amount</th>
-                    <th>Currency</th>
+                    <th>PIN</th>
+                    <th>Date</th>
+                    <th>Sender Name</th>
+                    <th>Sending Amount</th>
+                    <th>From Currency</th>
+                    <th>Exchange Rate</th>
+                    <th>Service Charge</th>
+                    <th>Receiver Name</th>
                     <th>Exchanged Amount</th>
                     <th>Status</th>
-                    <th>Date</th>
+                    <th>Cashier Name</th>
+                    <th>Receipt</th>
+                    <th>Updated At</th>
+                    <th>Updated By</th>
                     <th>Action</th>
                     <th>Print</th>
-                </tr>
+                    </tr>
             </thead>
             <tbody>
                 {% for tx in page_obj %}
                 <tr>
-                    <td>{{ forloop.counter }}</td>
+                    <td>{{ tx.pin }}</td>
+                    <td>{{ tx.created_at|date:"M d, Y H:i" }}</td>
                     <td>{{ tx.sender.full_name }}</td>
+                    <td>{{ tx.sending_amount }}</td>
+                    <td>{{ tx.from_currency }}</td>
+                    <td>{{ tx.exchange_rate }}</td>
+                    <td>{{ tx.service_charge }}</td>
                     <td>{{ tx.receiver.name }}</td>
-                    <td>{{ tx.amount }}</td>
-                    <td>{{ tx.currency }}</td>
                     <td>{{ tx.exchanged_amount }}</td>
                     <td>{{ tx.status }}</td>
-                    <td>{{ tx.created_at|date:"M d, Y H:i" }}</td>
+                    <td>{{ tx.cashier.username }}</td>
+                    <td>
+                        {% if tx.receipt %}
+                        <a href="{{ tx.receipt.url }}" target="_blank">View</a>
+                        {% else %}
+                        -
+                        {% endif %}
+                    </td>
+                    <td>{{ tx.updated_at|date:"Y-m-d H:i" }}</td>
+                    <td>{{ tx.updated_by.username }}</td>
                     <td>
                         <button class="btn btn-sm btn-outline-primary detail-transaction-btn" data-id="{{ tx.id }}">Details</button>
                     </td>
                     <td>
-                        <a href="{% url 'print_receipt' tx.id %}" class="btn btn-sm btn-outline-dark">Print Receipt</a>
+                        <button class="btn btn-sm btn-outline-secondary receipt-btn" data-id="{{ tx.id }}">Receipt</button>
                     </td>
                 </tr>
                 {% empty %}
@@ -112,6 +130,16 @@
   </div>
 </div>
 
+<!-- Receipt Modal -->
+<div class="modal fade" id="receiptModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content" id="receiptModalContent">
+      <!-- Receipt will be injected here -->
+    </div>
+  </div>
+</div>
+
+
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const detailModal = new bootstrap.Modal(document.getElementById('detailTransactionModal'));
@@ -127,6 +155,62 @@ document.addEventListener('DOMContentLoaded', function () {
                 });
         });
     });
+
+    document.querySelectorAll('.receipt-btn').forEach(button => {
+        button.addEventListener('click', function () {
+            const transactionId = this.getAttribute('data-id');
+            showReceipt(transactionId);
+        });
+    });
 });
+
+function showReceipt(transactionId) {
+    fetch(`/transactions/receipt/${transactionId}/`)
+        .then(res => res.json())
+        .then(data => {
+            document.getElementById('receiptModalContent').innerHTML = data.html;
+            new bootstrap.Modal(document.getElementById('receiptModal')).show();
+        })
+        .catch(error => {
+            console.error('Failed to load receipt:', error);
+        });
+}
+
+function printReceiptContent() {
+    const content = document.getElementById('printableReceiptContent').innerHTML;
+    const printWindow = window.open('', '', 'height=700,width=400');
+
+    printWindow.document.write(`
+        <html>
+            <head>
+                <title>Transaction Receipt</title>
+                <style>
+                    body {
+                        font-family: "Courier New", monospace;
+                        font-size: 13px;
+                        white-space: pre-wrap;
+                        padding: 10px;
+                        margin: 0;
+                    }
+                    @media print {
+                        body {
+                            margin: 0;
+                        }
+                    }
+                </style>
+            </head>
+            <body>${content}</body>
+        </html>
+    `);
+
+    printWindow.document.close();
+    printWindow.focus();
+    printWindow.onload = () => {
+        printWindow.print();
+        printWindow.close();
+    };
+}
+
 </script>
+
 {% endblock %}

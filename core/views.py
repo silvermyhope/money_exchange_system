@@ -12,11 +12,12 @@ from django.utils.timezone import now
 from django.db.models import Sum, Count, Q
 from .forms import SenderForm, TransactionUpdateForm, UserForm
 from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_POST, require_GET
 import random
 import string
 from decimal import Decimal, InvalidOperation
 from django.core.paginator import Paginator
+from django.template.loader import render_to_string
 
 
 
@@ -131,7 +132,7 @@ def cashier_dashboard(request):
 def accountant_dashboard(request):
     today = now().date()
     total_transactions = Transaction.objects.count()
-    totals_by_currency = Transaction.objects.values('currency').annotate(total_amount=Sum('amount'))
+    totals_by_currency = Transaction.objects.values('from_currency').annotate(total_amount=Sum('sending_amount'))
 
     transactions_list = Transaction.objects.all().order_by('-created_at')
     paginator = Paginator(transactions_list, 10)
@@ -154,20 +155,20 @@ def send_transaction(request):
     rate_obj = ExchangeRate.objects.filter(date=today, to_currency='ETB').first()
 
     exchange_rate = rate_obj.rate if rate_obj else Decimal('1.0')
-    service_fee_percent = Decimal('5.0')
+    service_charge_percent = Decimal('5.0')
 
     if request.method == 'POST':
         sender_id = request.POST.get('sender_id')
         receiver_id = request.POST.get('receiver')
-        amount = request.POST.get('amount')
-        currency = request.POST.get('currency')
+        sending_amount = request.POST.get('sending_amount')
+        from_currency = request.POST.get('from_currency')
         exchanged_amount = request.POST.get('exchanged_amount')
-        service_fee = request.POST.get('service_fee')
+        service_charge = request.POST.get('service_charge')
 
         try:
-            amount_decimal = Decimal(amount)
+            amount_decimal = Decimal(sending_amount)
             exchanged_decimal = Decimal(exchanged_amount)
-            service_fee_decimal = Decimal(service_fee)
+            service_charge_decimal = Decimal(service_charge)
         except (ValueError, TypeError, InvalidOperation):
             messages.error(request, "Invalid amount entered.")
             return redirect('send_transaction')
@@ -180,10 +181,10 @@ def send_transaction(request):
             Transaction.objects.create(
                 sender=sender,
                 receiver=receiver,
-                amount=amount_decimal,
-                currency=currency,
+                sending_amount=amount_decimal,
+                from_currency=from_currency,
                 exchanged_amount=exchanged_decimal,
-                service_fee=service_fee_decimal,
+                service_charge=service_charge_decimal,
                 status='Pending',
                 pin=pin,
                 cashier=request.user
@@ -196,7 +197,7 @@ def send_transaction(request):
 
     return render(request, 'core/send_transaction.html', {
         'exchange_rate': float(exchange_rate),
-        'service_fee_percent': float(service_fee_percent)
+        'service_charge_percent': float(service_charge_percent)
     })
 
 
@@ -382,10 +383,10 @@ def add_exchange_rate(request):
 @login_required
 @group_required('Cashier')
 def get_exchange_rate(request):
-    currency = request.GET.get('currency')
+    from_currency = request.GET.get('from_currency')
     today = now().date()
 
-    rate_obj = ExchangeRate.objects.filter(date=today, from_currency=currency, to_currency='ETB').first()
+    rate_obj = ExchangeRate.objects.filter(date=today, from_currency=from_currency, to_currency='ETB').first()
 
     if rate_obj:
         return JsonResponse({'rate': float(rate_obj.rate)})
@@ -437,3 +438,26 @@ def print_receipt(request, transaction_id):
         'sender': sender,
         'receiver': receiver,
     })
+
+
+@login_required
+@group_required('Cashier')
+def get_receipt_modal(request, transaction_id):
+    print("Receipt view hit for transaction:", transaction_id)  # DEBUG
+
+    try:
+        transaction = get_object_or_404(Transaction, pk=transaction_id)
+        sender = transaction.sender
+        receiver = transaction.receiver
+
+        html = render_to_string('core/receipt_modal_content.html', {
+            'transaction': transaction,
+            'sender': sender,
+            'receiver': receiver,
+        }, request=request)
+
+        return JsonResponse({'html': html})
+
+    except Exception as e:
+        print("ERROR in get_receipt_modal:", e)  # DEBUG
+        return JsonResponse({'error': str(e)}, status=500)

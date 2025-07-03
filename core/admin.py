@@ -3,8 +3,8 @@ from .models import Sender, Transaction, Receiver, ExchangeRate
 
 @admin.register(Transaction)
 class TransactionAdmin(admin.ModelAdmin):
-    list_display = ('sender', 'receiver', 'amount', 'currency', 'status', 'created_at')
-    list_filter = ('status', 'currency')
+    list_display = ('sender', 'receiver', 'sending_amount', 'from_currency', 'status', 'created_at')
+    list_filter = ('status', 'from_currency')
     search_fields = ('sender__username', 'receiver__username')
 
 @admin.register(Sender)

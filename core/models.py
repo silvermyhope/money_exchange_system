@@ -42,15 +42,20 @@ class ExchangeRate(models.Model):
 
 
 class Transaction(models.Model):
+    pin = models.CharField(max_length=6, unique=True, null=True, blank=True)
     sender = models.ForeignKey(Sender, on_delete=models.CASCADE, related_name='sent_transactions')
     receiver = models.ForeignKey(Receiver, on_delete=models.CASCADE, related_name='received_transactions')
     cashier = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)
-    amount = models.DecimalField(max_digits=10, decimal_places=2)
-    currency = models.CharField(max_length=10)
+    
+    # Sending information
+    sending_amount = models.DecimalField(max_digits=10, decimal_places=2)
+    from_currency = models.CharField(max_length=10)
+    exchange_rate = models.DecimalField(max_digits=10, decimal_places=4, null=True, blank=True)
+    service_charge = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+
+    # Receiving information
     exchanged_amount = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
-    service_fee = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-    receipt = models.ImageField(upload_to='receipts/', null=True, blank=True)
-    updated_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='accountant_updates')
+    
     status = models.CharField(max_length=20, choices=[
         ('Pending', 'Pending'),
         ('Processing', 'Processing'),
@@ -58,7 +63,10 @@ class Transaction(models.Model):
         ('Completed', 'Completed'),
         ('Cancelled', 'Cancelled')
     ])
-    pin = models.CharField(max_length=6, unique=True, null=True, blank=True)
+    
+    receipt = models.ImageField(upload_to='receipts/', null=True, blank=True)
+    updated_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='accountant_updates')
+    
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -71,4 +79,4 @@ class Transaction(models.Model):
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"{self.sender} → {self.receiver} ({self.amount} {self.currency})"
+        return f"PIN {self.pin} | {self.sender} → {self.receiver} | {self.sending_amount} {self.from_currency}"

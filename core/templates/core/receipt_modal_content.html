@@ -1,0 +1,47 @@
+<div class="modal-header">
+  <h5 class="modal-title">Transaction Receipt</h5>
+  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+</div>
+
+<div class="modal-body" id="printableReceiptContent">
+  <pre style="font-family: 'Courier New', monospace; font-size: 13px;">
+Adot Market LLC
+Money Transfer
+Portland, OR
+Tel: (971) 331-1388
+----------------------------
+
+Transaction PIN: {{ transaction.pin }}
+Date: {{ transaction.created_at|date:"Y-m-d H:i" }}
+Status: {{ transaction.status }}
+
+Sender:
+  Name: {{ sender.full_name }}
+  Phone: {{ sender.phone }}
+  ID: {{ sender.id_number }}
+  Address: {{ sender.address }}
+
+Recipient:
+  Name: {{ receiver.name }}
+  Phone: {{ receiver.phone }}
+  Country: {{ receiver.country }}
+  Bank: {{ receiver.bank }}
+  Account: {{ receiver.account }}
+
+Transfer:
+  Sending Amount: {{ transaction.sending_amount }} {{ transaction.from_currency }}
+  Exchange Rate: {{ transaction.exchange_rate }}
+  Service Fee: {{ transaction.service_charge }} {{ transaction.from_currency }}
+  Received Amount: {{ transaction.exchanged_amount }} {{ transaction.to_currency }}
+
+----------------------------
+Thank you for choosing our service!
+CUSTOMER SIGNATURE
+__________________________
+  </pre>
+</div>
+
+<div class="modal-footer no-print text-center mt-3">
+  <button class="btn btn-primary" onclick="printReceiptContent()">Print Receipt</button>
+  <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+</div>

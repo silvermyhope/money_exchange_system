@@ -1,5 +1,6 @@
 from django.urls import path
 from . import views
+from core import views
 from django.conf import settings
 from django.conf.urls.static import static
 
@@ -32,7 +33,9 @@ urlpatterns = [
     path('superadmin/user/delete/<int:user_id>/', views.delete_user, name='delete_user'),
     path('superadmin/groups/add/', views.manage_groups, name='manage_groups'),
 
-    path('transactions/receipt/<int:transaction_id>/', views.print_receipt, name='print_receipt'),
+    # path('transactions/receipt/<int:transaction_id>/', views.print_receipt, name='print_receipt'),
+    path('transactions/receipt/<int:transaction_id>/', views.get_receipt_modal, name='get_receipt_modal'),
+
 
 ]
 

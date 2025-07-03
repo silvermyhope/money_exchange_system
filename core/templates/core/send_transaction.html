@@ -13,7 +13,7 @@
 
         <div class="mb-3">
             <strong>Today's Exchange Rate (to ETB):</strong> <span id="exchangeRate">{{ exchange_rate }}</span><br>
-            <strong>Service Fee:</strong> {{ service_fee_percent }}%
+            <strong>Service Charge:</strong> {{ service_charge_percent }}%
         </div>
 
         <div class="row g-3 mb-4">
@@ -61,22 +61,27 @@
             <input type="hidden" name="sender_id" id="senderId">
             <input type="hidden" name="receiver" id="receiverId">
             <input type="hidden" name="exchanged_amount" id="exchangedAmountInput">
-            <input type="hidden" name="service_fee" id="serviceFeeInput">
+            <input type="hidden" name="service_charge" id="serviceChargeInput">
 
             <div class="mb-3">
-                <label for="amount" class="form-label">Amount</label>
-                <input type="number" name="amount" id="amountInput" class="form-control" required>
+                <label for="sending_amount" class="form-label">Amount</label>
+                <input type="number" name="sending_amount" id="amountInput" class="form-control" required>
             </div>
 
             <div class="mb-3">
-                <label for="currency" class="form-label">Currency</label>
-                <input type="text" name="currency" id="currencyInput" class="form-control" required>
+                <label for="from_currency" class="form-label">Currency</label>
+                <select name="from_currency" id="currencyInput" class="form-select" required>
+                    <option value="USD">USD</option>
+                    <option value="CAD">CAD</option>
+                    <option value="EUR">EUR</option>
+                </select>
+
             </div>
 
             <div class="mb-3">
                 <strong>Amount After Fee:</strong> <span id="amountAfterFee">0.00</span><br>
                 <strong>Exchanged Amount (ETB):</strong> <span id="exchangedAmount">0.00</span><br>
-                <strong>Service Fee:</strong> <span id="serviceFee">0.00</span>
+                <strong>Service Charge:</strong> <span id="service_charge">0.00</span>
             </div>
 
             <button type="submit" class="btn btn-success">Send</button>
@@ -169,34 +174,35 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
     const exchangeRate = parseFloat(document.getElementById('exchangeRate').textContent);
-    const serviceFeePercent = {{ service_fee_percent }};
+    const serviceChargePercent = {{ service_charge_percent }};
     const amountInput = document.getElementById('amountInput');
     const amountAfterFee = document.getElementById('amountAfterFee');
     const exchangedAmount = document.getElementById('exchangedAmount');
-    const serviceFee = document.getElementById('serviceFee');
+    // const serviceCharge = document.getElementById('serviceCharge');
+    const serviceCharge = document.getElementById('service_charge');
     const exchangedAmountInput = document.getElementById('exchangedAmountInput');
-    const serviceFeeInput = document.getElementById('serviceFeeInput');
+    const serviceChargeInput = document.getElementById('serviceChargeInput');
 
 
 
 amountInput.addEventListener('input', function () {
         const amt = parseFloat(this.value);
         if (!isNaN(amt)) {
-            const fee = amt * (serviceFeePercent / 100);
+            const fee = amt * (serviceChargePercent / 100);
             const netAmount = amt - fee;
             const exchanged = netAmount * exchangeRate;
 
-            serviceFee.textContent = fee.toFixed(2);
+            serviceCharge.textContent = fee.toFixed(2);
             amountAfterFee.textContent = netAmount.toFixed(2);
             exchangedAmount.textContent = exchanged.toFixed(2);
 
-            serviceFeeInput.value = fee.toFixed(2);
+            serviceChargeInput.value = fee.toFixed(2);
             exchangedAmountInput.value = exchanged.toFixed(2);
         } else {
-            serviceFee.textContent = '0.00';
+            serviceCharge.textContent = '0.00';
             amountAfterFee.textContent = '0.00';
             exchangedAmount.textContent = '0.00';
-            serviceFeeInput.value = '';
+            serviceChargeInput.value = '';
             exchangedAmountInput.value = '';
         }
     });
