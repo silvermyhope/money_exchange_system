@@ -32,10 +32,7 @@ DEBUG = True
 
 # ALLOWED_HOSTS = ['artharemittance.com', 'www.artharemittance.com']
 ALLOWED_HOSTS = [
-     'artharemittance.onrender.com',
-    'www.artharemittance.com',  # You'll use this later when pointing the domain
-    'localhost',
-    '127.0.0.1',
+    
 ]
 
 # Application definition

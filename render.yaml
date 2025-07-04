@@ -1,7 +1,0 @@
-services:
-  - type: web
-    name: artharemittance
-    env: python
-    buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn money_exchange_project.wsgi
-    plan: free
