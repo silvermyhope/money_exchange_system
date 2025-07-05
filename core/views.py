@@ -24,13 +24,15 @@ from django.template.loader import render_to_string
 def home(request):
     return render(request, 'core/index.html')
 
-@staff_member_required
+@login_required
+@group_required('SuperAdmin')
 def superadmin_dashboard(request):
     users = User.objects.all().order_by('-date_joined')
     form = UserForm()
     return render(request, 'core/superadmin_dashboard.html', {'users': users, 'form': form})
 
-@staff_member_required
+@login_required
+@group_required('SuperAdmin')
 def create_user(request):
     if request.method == 'POST':
         form = UserForm(request.POST)
@@ -45,7 +47,8 @@ def create_user(request):
             messages.error(request, 'Failed to create user.')
     return redirect('superadmin_dashboard')
 
-@staff_member_required
+@login_required
+@group_required('SuperAdmin')
 def edit_user(request, user_id):
     user = get_object_or_404(User, id=user_id)
     if request.method == 'POST':
@@ -65,15 +68,16 @@ def edit_user(request, user_id):
     return render(request, 'core/partial_user_form.html', {'form': form, 'user': user})
 
 
-@staff_member_required
-@require_POST
+@login_required
+@group_required('SuperAdmin')
 def delete_user(request, user_id):
     user = get_object_or_404(User, id=user_id)
     user.delete()
     messages.success(request, 'User deleted successfully.')
     return redirect('superadmin_dashboard')
 
-@staff_member_required
+@login_required
+@group_required('SuperAdmin')
 def manage_groups(request):
     if request.method == 'POST':
         group_name = request.POST.get('group_name')
@@ -91,12 +95,12 @@ class RoleBasedLoginView(LoginView):
         user = self.request.user
         print("Login success for:", user.username)
 
-        if user.is_superuser:
+        if user.groups.filter(name='SuperAdmin').exists():
             print("Redirecting to superadmin dashboard")
             return '/superadmin/dashboard/'
-        elif user.groups.filter(name='Cashier').exists():
-            print("Redirecting to cashier dashboard")
-            return '/cashier/dashboard/'
+        elif user.groups.filter(name='Agent').exists():
+            print("Redirecting to Agent dashboard")
+            return '/agent/dashboard/'
         elif user.groups.filter(name='Accountant').exists():
             print("Redirecting to accountant dashboard")
             return '/accountant/dashboard/'
@@ -106,24 +110,24 @@ class RoleBasedLoginView(LoginView):
 
 
 @login_required
-@group_required('Cashier')
-def cashier_dashboard(request):
+@group_required('Agent')
+def agent_dashboard(request):
     user = request.user
     today = now().date()
 
-    transactions_list = Transaction.objects.filter(cashier=user).order_by('-created_at')
+    transactions_list = Transaction.objects.filter(agent=user).order_by('-created_at')
     paginator = Paginator(transactions_list, 10)  # 10 transactions per page
 
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
-    today_count = Transaction.objects.filter(cashier=user, created_at__date=today).count()
+    today_count = Transaction.objects.filter(agent=user, created_at__date=today).count()
 
     context = {
         'today_count': today_count,
         'page_obj': page_obj
     }
-    return render(request, 'core/cashier_dashboard.html', context)
+    return render(request, 'core/agent_dashboard.html', context)
 
 
 
@@ -149,7 +153,7 @@ def accountant_dashboard(request):
 
 
 @login_required
-@group_required('Cashier')
+@group_required('Agent')
 def send_transaction(request):
     today = now().date()
     rate_obj = ExchangeRate.objects.filter(date=today, to_currency='ETB').first()
@@ -187,7 +191,7 @@ def send_transaction(request):
                 service_charge=service_charge_decimal,
                 status='Pending',
                 pin=pin,
-                cashier=request.user
+                agent=request.user
             )
             messages.success(request, f"Transaction created successfully! PIN: {pin}")
             return redirect('transaction_list')
@@ -204,8 +208,8 @@ def send_transaction(request):
 
 @login_required
 def transaction_list(request):
-    if request.user.groups.filter(name='Cashier').exists():
-        transactions = Transaction.objects.filter(cashier=request.user).order_by('-created_at')
+    if request.user.groups.filter(name='agent').exists():
+        transactions = Transaction.objects.filter(agent=request.user).order_by('-created_at')
     elif request.user.groups.filter(name='Accountant').exists():
         transactions = Transaction.objects.all().order_by('-created_at')
     else:
@@ -219,7 +223,7 @@ def transaction_list(request):
 
 
 @login_required
-@group_required('Cashier')
+@group_required('Agent')
 def register_sender(request):
     form = SenderForm(request.POST or None)
     if request.method == 'POST':
@@ -228,7 +232,7 @@ def register_sender(request):
             return redirect('register_sender')
     return render(request, 'core/register_sender.html', {'form': form})
 
-@group_required('Cashier')
+@group_required('Agent')
 def search_sender(request):
     query = request.GET.get('q', '')
     results = []
@@ -252,7 +256,7 @@ def generate_unique_pin():
         
 
 @login_required
-@group_required('Cashier')
+@group_required('Agent')
 def register_receiver(request):
     if request.method == 'POST':
         sender_id = request.POST.get('sender_id')
@@ -282,7 +286,7 @@ def register_receiver(request):
 
 
 @login_required
-@group_required('Cashier')
+@group_required('Agent')
 def search_receivers(request):
     sender_id = request.GET.get('sender_id')
     receivers = []
@@ -297,7 +301,7 @@ def search_receivers(request):
 @csrf_exempt
 @require_POST
 @login_required
-@group_required('Cashier')
+@group_required('Agent')
 def ajax_register_receiver(request):
     sender_id = request.POST.get('sender_id')
     name = request.POST.get('name')
@@ -331,7 +335,7 @@ def ajax_register_receiver(request):
 @csrf_exempt
 @require_POST
 @login_required
-@group_required('Cashier')
+@group_required('Agent')
 def ajax_register_sender(request):
     if request.method == 'POST':
         sender = Sender.objects.create(
@@ -355,14 +359,14 @@ def ajax_register_sender(request):
 
 
 @login_required
-@group_required('Cashier')
+@group_required('SuperAdmin')
 def exchange_rates(request):
     rates = ExchangeRate.objects.all()
     return render(request, 'core/exchange_rates.html', {'rates': rates})
 
 
 @login_required
-@group_required('Cashier')
+@group_required('SuperAdmin')
 def add_exchange_rate(request):
     if request.method == 'POST':
         from_currency = request.POST.get('from_currency')
@@ -381,7 +385,7 @@ def add_exchange_rate(request):
 
 
 @login_required
-@group_required('Cashier')
+@group_required('Agent')
 def get_exchange_rate(request):
     from_currency = request.GET.get('from_currency')
     today = now().date()
@@ -419,15 +423,15 @@ def transaction_detail(request, transaction_id):
     transaction = get_object_or_404(Transaction, id=transaction_id)
 
     # Restrict access: Cashiers can only view their own transactions
-    if request.user.groups.filter(name='Cashier').exists():
-        if transaction.cashier != request.user:
+    if request.user.groups.filter(name='Agent').exists():
+        if transaction.agent != request.user:
             return HttpResponseForbidden('Access denied.')
 
     return render(request, 'core/partial_transaction_detail.html', {'transaction': transaction})
 
 
 @login_required
-@group_required('Cashier')
+@group_required('Agent')
 def print_receipt(request, transaction_id):
     transaction = get_object_or_404(Transaction, id=transaction_id)
     sender = transaction.sender
@@ -441,7 +445,7 @@ def print_receipt(request, transaction_id):
 
 
 @login_required
-@group_required('Cashier')
+@group_required('Agent')
 def get_receipt_modal(request, transaction_id):
     print("Receipt view hit for transaction:", transaction_id)  # DEBUG
 

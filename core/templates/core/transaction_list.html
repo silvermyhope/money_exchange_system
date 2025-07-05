@@ -3,7 +3,13 @@
 
 {% block content %}
 <div class="container mt-5">
-    <h2 class="text-gold mb-4">Transaction List</h2>
+    <h2 class="text-gold mb-8">Transaction List</h2>
+
+    <div class="row mb-4">
+            <div class="col-md-4 offset-md-4 text-end ">
+                <a href="{% url 'send_transaction' %}" class="btn btn-primary btn-outline-gold ">New Transaction</a>
+            </div>
+    </div>
 
     {% if messages %}
       {% for message in messages %}
@@ -11,9 +17,11 @@
       {% endfor %}
     {% endif %}
 
-    {% if group == 'Cashier' %}
+    {% if group == 'Agent' %}
     <a href="{% url 'send_transaction' %}" class="btn btn-outline-gold mb-3">Send Money</a>
     {% endif %}
+
+    </div>
 
     <div class="table-responsive">
         <table class="table table-bordered table-hover bg-white text-dark">
@@ -29,7 +37,7 @@
                     <th>Receiver Name</th>
                     <th>Exchanged Amount</th>
                     <th>Status</th>
-                    <th>Cashier Name</th>
+                    <th>Agent Name</th>
                     <th>Receipt</th>
                     <th>Updated At</th>
                     <th>Updated By</th>
@@ -50,7 +58,7 @@
                     <td>{{ tx.receiver.name }}</td>
                     <td>{{ tx.exchanged_amount }}</td>
                     <td>{{ tx.status }}</td>
-                    <td>{{ tx.cashier.username }}</td>
+                    <td>{{ tx.agent.username }}</td>
                     <td>
                         {% if tx.receipt %}
                         <a href="{{ tx.receipt.url }}" target="_blank">View</a>

@@ -3,7 +3,7 @@
 
 {% block content %}
 <div class="container mt-5">
-    <h2 class="text-gold mb-4">Welcome, {{ request.user.first_name }}!</h2>
+    <h2 class="text-gold mb-4">Welcome, {{ request.user.username }}!</h2>
 
     <div class="row mb-4">
         <div class="col-md-4">
@@ -15,8 +15,9 @@
             </div>
         </div>
 
-        <div class="col-md-4 offset-md-4 text-end">
-            <a href="{% url 'send_transaction' %}" class="btn btn-outline-gold btn-lg">Send Transaction</a>
+        <div class="col-md-4 offset-md-4 text-end text-nowrap">
+            <a href="{% url 'send_transaction' %}" class="btn btn-primary">Send Transaction</a>
+            <a href="{% url 'transaction_list' %}" class="btn btn-secondary ms-2">Transaction List</a>
         </div>
     </div>
 

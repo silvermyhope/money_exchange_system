@@ -45,7 +45,7 @@ class Transaction(models.Model):
     pin = models.CharField(max_length=6, unique=True, null=True, blank=True)
     sender = models.ForeignKey(Sender, on_delete=models.CASCADE, related_name='sent_transactions')
     receiver = models.ForeignKey(Receiver, on_delete=models.CASCADE, related_name='received_transactions')
-    cashier = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)
+    agent = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)
     
     # Sending information
     sending_amount = models.DecimalField(max_digits=10, decimal_places=2)
